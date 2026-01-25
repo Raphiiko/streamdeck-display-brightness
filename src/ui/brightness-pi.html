@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Brightness Control Settings</title>
+    <link rel="stylesheet" href="sdpi.css" />
+    <link rel="stylesheet" href="brightness-pi.css" />
+  </head>
+  <body>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Monitors</div>
+      <div id="monitor-container">
+        <div class="no-monitors">Refreshing...</div>
+      </div>
+      <button class="sdpi-item-value refresh-btn" id="refresh-btn">Refresh Monitor List</button>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Step Size</div>
+      <div class="sdpi-item-group">
+        <input type="range" class="sdpi-item-value" id="stepSize" min="1" max="20" value="5" />
+        <span id="stepValue" class="sdpi-item-value">5</span>
+      </div>
+      <div class="sdpi-info">
+        Step size determines how much of brightness changes per dial tick.
+      </div>
+    </div>
+
+    <div class="sdpi-item">
+      <div class="section-header" id="advanced-header">
+        <span id="advancedToggle" class="section-toggle collapsed">&#9660;</span>
+        <span>Advanced Settings</span>
+      </div>
+    </div>
+
+    <div id="advancedSection" class="section-content collapsed">
+      <div class="sdpi-item">
+        <div class="sdpi-item-label">DDC Write Throttle</div>
+        <div class="slider-container">
+          <input
+            type="range"
+            class="sdpi-item-value"
+            id="ddcWriteThrottleMs"
+            min="10"
+            max="5000"
+            value="1000"
+            step="10"
+          />
+          <span id="ddcWriteValue" class="slider-value">1000ms</span>
+        </div>
+        <div class="sdpi-info">Minimum time between DDC write commands (default: 1000ms).</div>
+      </div>
+
+      <div class="sdpi-item">
+        <div class="sdpi-item-label">Enforcement Duration</div>
+        <div class="slider-container">
+          <input
+            type="range"
+            class="sdpi-item-value"
+            id="enforcementDurationMs"
+            min="1000"
+            max="30000"
+            value="10000"
+            step="500"
+          />
+          <span id="enforcementDurationValue" class="slider-value">10000ms</span>
+        </div>
+        <div class="sdpi-info">
+          Duration to keep retrying brightness writes after user input (default: 10000ms).
+        </div>
+      </div>
+
+      <div class="sdpi-item">
+        <div class="sdpi-item-label">Enforcement Interval</div>
+        <div class="slider-container">
+          <input
+            type="range"
+            class="sdpi-item-value"
+            id="enforcementIntervalMs"
+            min="100"
+            max="5000"
+            value="1000"
+            step="100"
+          />
+          <span id="enforcementIntervalValue" class="slider-value">1000ms</span>
+        </div>
+        <div class="sdpi-info">
+          Interval between retry attempts when enforcing brightness (default: 1000ms).
+        </div>
+      </div>
+
+      <div class="sdpi-item">
+        <div class="sdpi-item-label">Poll Interval</div>
+        <div class="slider-container">
+          <input
+            type="range"
+            class="sdpi-item-value"
+            id="pollIntervalMs"
+            min="10"
+            max="5000"
+            value="5000"
+            step="10"
+          />
+          <span id="pollValue" class="slider-value">5000ms</span>
+        </div>
+        <div class="sdpi-info">Interval for polling monitor brightness (default: 5000ms).</div>
+      </div>
+    </div>
+
+    <script src="brightness-pi.js"></script>
+  </body>
+</html>

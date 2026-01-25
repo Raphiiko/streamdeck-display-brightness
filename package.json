@@ -1,0 +1,36 @@
+{
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.raphiiko.sdbrightness\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.ui.json",
+    "prepare": "husky"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@elgato/cli": "^1.7.0",
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.2",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.0",
+    "@tsconfig/node20": "^20.1.2",
+    "@types/node": "~20.15.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.53.1",
+    "eslint": "^9.39.2",
+    "husky": "^9.1.7",
+    "prettier": "^3.8.1",
+    "rollup": "^4.0.2",
+    "sharp": "^0.34.5",
+    "tslib": "^2.6.2",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@ddc-node/ddc-node": "^1.0.3",
+    "@elgato/streamdeck": "^2.0.0",
+    "rxjs": "^7.8.2"
+  }
+}

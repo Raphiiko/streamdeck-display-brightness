@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+*.log
+.DS_Store
+coverage
+.vscode
+.idea
+*.lock
+nul
+bin

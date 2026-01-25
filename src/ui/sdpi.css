@@ -1,0 +1,95 @@
+:root {
+  --sdpi-bgcolor: #2d2d2d;
+  --sdpi-color: #d8d8d8;
+  --sdpi-bordercolor: #3a3a3a;
+  --sdpi-buttonbordercolor: #969696;
+  --sdpi-background: #3d3d3d;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  background-color: var(--sdpi-bgcolor);
+  color: var(--sdpi-color);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 9pt;
+  margin: 0;
+  padding: 8px;
+}
+
+.sdpi-item {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.sdpi-item-label {
+  color: #969696;
+  font-size: 8pt;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+
+.sdpi-item-value {
+  background-color: var(--sdpi-background);
+  border: 1px solid var(--sdpi-bordercolor);
+  border-radius: 3px;
+  color: var(--sdpi-color);
+  padding: 4px 8px;
+}
+
+.sdpi-item-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input[type='range'] {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  background: var(--sdpi-background);
+  border-radius: 3px;
+  outline: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #0078d4;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+button {
+  background-color: var(--sdpi-background);
+  border: 1px solid var(--sdpi-buttonbordercolor);
+  border-radius: 3px;
+  color: var(--sdpi-color);
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: 9pt;
+}
+
+button:hover {
+  background-color: #4a4a4a;
+}
+
+button:active {
+  background-color: #555555;
+}
+
+.sdpi-info {
+  color: #808080;
+  font-size: 8pt;
+  margin-top: 4px;
+}
+
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}

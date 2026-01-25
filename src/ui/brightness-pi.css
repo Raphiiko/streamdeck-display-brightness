@@ -1,0 +1,67 @@
+.monitor-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  margin: 8px 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+.monitor-item {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.monitor-item:last-child {
+  border-bottom: none;
+}
+.monitor-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.refresh-btn {
+  margin-top: 8px;
+}
+.no-monitors {
+  padding: 16px;
+  text-align: center;
+  color: #888;
+}
+input[type='checkbox'] {
+  width: auto;
+  margin: 0;
+}
+.section-header {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  user-select: none;
+}
+.section-header:hover {
+  color: #fff;
+}
+.section-toggle {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+.section-toggle.collapsed {
+  transform: rotate(-90deg);
+}
+.section-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+.section-content.collapsed {
+  max-height: 0 !important;
+}
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.slider-value {
+  min-width: 50px;
+  text-align: right;
+}

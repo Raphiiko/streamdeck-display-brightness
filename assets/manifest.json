@@ -1,0 +1,50 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Display Brightness Control",
+  "Version": "1.0.0.0",
+  "Author": "Raphiiko",
+  "Description": "Control monitor brightness via DDC/CI using Stream Deck+ dials",
+  "Icon": "imgs/plugin/marketplace",
+  "Category": "Display Brightness Control",
+  "CategoryIcon": "imgs/plugin/category-icon",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "enabled"
+  },
+  "Actions": [
+    {
+      "Name": "Brightness Control",
+      "UUID": "com.raphiiko.sdbrightness.control",
+      "Icon": "imgs/actions/brightness/icon",
+      "Tooltip": "Control monitor brightness via DDC/CI",
+      "Controllers": ["Encoder"],
+      "Encoder": {
+        "layout": "$B1",
+        "TriggerDescription": {
+          "Rotate": "Adjust brightness",
+          "Push": "Toggle 0%/100%",
+          "Touch": "Set to 100%",
+          "LongTouch": "Set to 0%"
+        }
+      },
+      "PropertyInspectorPath": "ui/brightness-pi.html",
+      "States": [
+        {
+          "Image": "imgs/actions/brightness/dial"
+        }
+      ]
+    }
+  ],
+  "UUID": "com.raphiiko.sdbrightness"
+}
