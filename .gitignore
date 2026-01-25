@@ -6,3 +6,7 @@ dist/
 
 # Old plugin folder (can be removed after migration)
 com.raphiiko.sdbrightness.sdPlugin/
+
+# IDE settings
+.claude/
+.vscode/
