@@ -1,3 +1,6 @@
+/* Shared styles for Property Inspectors */
+
+/* Monitor list */
 .monitor-list {
   max-height: 200px;
   overflow-y: auto;
@@ -6,6 +9,7 @@
   margin: 8px 0;
   background: rgba(0, 0, 0, 0.2);
 }
+
 .monitor-item {
   padding: 8px 12px;
   display: flex;
@@ -13,24 +17,44 @@
   gap: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 .monitor-item:last-child {
   border-bottom: none;
 }
+
 .monitor-item:hover {
   background: rgba(255, 255, 255, 0.05);
 }
-.refresh-btn {
-  margin-top: 8px;
+
+.monitor-item input[type='checkbox'] {
+  width: auto;
+  margin: 0;
 }
+
 .no-monitors {
   padding: 16px;
   text-align: center;
   color: #888;
 }
-input[type='checkbox'] {
-  width: auto;
-  margin: 0;
+
+/* Buttons */
+.refresh-btn {
+  width: 100%;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 8px;
 }
+
+.refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Collapsible sections */
 .section-header {
   cursor: pointer;
   display: flex;
@@ -39,29 +63,42 @@ input[type='checkbox'] {
   padding: 8px 0;
   user-select: none;
 }
+
 .section-header:hover {
   color: #fff;
 }
+
 .section-toggle {
   font-size: 10px;
   transition: transform 0.2s;
 }
+
 .section-toggle.collapsed {
   transform: rotate(-90deg);
 }
+
 .section-content {
   overflow: hidden;
   transition: max-height 0.3s ease-out;
 }
+
 .section-content.collapsed {
   max-height: 0 !important;
 }
+
+/* Sliders */
 .slider-container {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .slider-value {
   min-width: 50px;
   text-align: right;
+}
+
+input[type='checkbox'] {
+  width: auto;
+  margin: 0;
 }

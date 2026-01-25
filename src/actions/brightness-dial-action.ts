@@ -25,7 +25,7 @@ interface ActionInstanceMethods {
 }
 
 @action({ UUID: 'com.raphiiko.sdbrightness.control' })
-export class BrightnessAction extends SingletonAction<BrightnessSettings> {
+export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
   private monitorManager = MonitorManager.getInstance();
   private brightnessStore = BrightnessStore.getInstance();
   // Map of action context ID to subscription - each dial needs its own subscription

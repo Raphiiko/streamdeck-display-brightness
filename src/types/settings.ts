@@ -5,6 +5,32 @@ export interface BrightnessSettings {
   [key: string]: string[] | number | undefined;
 }
 
+export interface BrightnessButtonSettings {
+  /** Array of monitor IDs to control */
+  selectedMonitors?: string[];
+
+  /** Operation mode: what happens when button is pressed */
+  operationMode?: 'increase' | 'decrease' | 'set' | 'toggle' | 'cycle';
+
+  /** Step size for increase/decrease modes (1-100, default: 10) */
+  stepSize?: number;
+
+  /** Target brightness for 'set' mode (0-100, default: 100) */
+  setValue?: number;
+
+  /** First value for 'toggle' mode (0-100, default: 0) */
+  toggleValue1?: number;
+
+  /** Second value for 'toggle' mode (0-100, default: 100) */
+  toggleValue2?: number;
+
+  /** Array of values for 'cycle' mode (default: [0, 25, 50, 75, 100]) */
+  cycleValues?: number[];
+
+  // Index signature required by Stream Deck SDK's JsonObject constraint
+  [key: string]: string | number | string[] | number[] | undefined;
+}
+
 export interface GlobalSettings {
   ddcWriteThrottleMs?: number;
   enforcementDurationMs?: number;

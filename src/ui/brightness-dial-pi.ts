@@ -1,50 +1,7 @@
-interface Settings {
-  selectedMonitors: string[];
-  stepSize: number;
-}
+import type { GlobalSettings } from '../types/settings';
+import type { StreamDeck, Monitor, DialSettings } from './shared-types';
 
-interface GlobalSettings {
-  ddcWriteThrottleMs: number;
-  enforcementDurationMs: number;
-  enforcementIntervalMs: number;
-  pollIntervalMs: number;
-}
-
-interface Monitor {
-  id: string;
-  name: string;
-  brightness: number;
-  available: boolean;
-}
-
-interface StreamDeck {
-  websocket: WebSocket;
-  uuid: string;
-  send(payload: unknown): void;
-  getSettings(): void;
-  setSettings(payload: Settings): void;
-  getGlobalSettings(): void;
-  setGlobalSettings(payload: GlobalSettings): void;
-  sendToPlugin(payload: { event: string }): void;
-}
-
-declare global {
-  var connectElgatoStreamDeckSocket: (
-    inPort: string,
-    inUUID: string,
-    inRegisterEvent: string,
-    inInfo: string,
-    inActionInfo: string
-  ) => void;
-}
-
-declare global {
-  interface Window {
-    streamDeck?: StreamDeck;
-  }
-}
-
-let currentSettings: Settings = {
+let currentSettings: DialSettings = {
   selectedMonitors: [],
   stepSize: 5,
 };
@@ -73,13 +30,14 @@ function connectElgatoStreamDeckSocket(
   const streamDeck: StreamDeck = {
     websocket: new WebSocket(`ws://127.0.0.1:${inPort}`),
     uuid: uuid,
+    action: action,
     send: function (payload: unknown): void {
       this.websocket.send(JSON.stringify(payload));
     },
     getSettings: function (): void {
       this.send({ event: 'getSettings', context: uuid });
     },
-    setSettings: function (payload: Settings): void {
+    setSettings: function (payload: DialSettings): void {
       this.send({ event: 'setSettings', context: uuid, payload });
     },
     getGlobalSettings: function (): void {
@@ -110,7 +68,7 @@ function connectElgatoStreamDeckSocket(
     const msg = JSON.parse(evt.data as string) as {
       event: string;
       payload?: {
-        settings?: Settings | GlobalSettings;
+        settings?: DialSettings | GlobalSettings;
         event?: string;
         monitors?: Monitor[];
       };
@@ -120,7 +78,7 @@ function connectElgatoStreamDeckSocket(
     if (msg.event === inRegisterEvent) {
       streamDeck.uuid = uuid;
     } else if (msg.event === 'didReceiveSettings' && msg.payload?.settings) {
-      currentSettings = { ...currentSettings, ...(msg.payload.settings as Settings) };
+      currentSettings = { ...currentSettings, ...(msg.payload.settings as DialSettings) };
       updateStepSize();
       if (isInitialized) {
         requestMonitorList();
@@ -245,12 +203,37 @@ function renderMonitorList(): void {
 						value="${monitor.id}"
 						${currentSettings.selectedMonitors.includes(monitor.id) ? 'checked' : ''}
 					/>
-					<span>${monitor.name} (${monitor.brightness}%)</span>
+					<span>${monitor.name}</span>
 				</label>
 			`;
       })
       .join('') +
     '</div>';
+
+  attachMonitorCheckboxListeners();
+}
+
+function attachMonitorCheckboxListeners(): void {
+  availableMonitors.forEach((monitor) => {
+    const checkbox = document.getElementById(`monitor-${monitor.id}`) as HTMLInputElement | null;
+    if (checkbox) {
+      checkbox.addEventListener('change', function (this: HTMLInputElement): void {
+        const monitorId = this.value;
+        if (this.checked) {
+          if (!currentSettings.selectedMonitors.includes(monitorId)) {
+            currentSettings.selectedMonitors.push(monitorId);
+          }
+        } else {
+          currentSettings.selectedMonitors = currentSettings.selectedMonitors.filter(
+            (id) => id !== monitorId
+          );
+        }
+        if (window.streamDeck) {
+          window.streamDeck.setSettings(currentSettings);
+        }
+      });
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function (): void {
@@ -343,28 +326,8 @@ document.addEventListener('DOMContentLoaded', function (): void {
       }
     });
   }
-
-  // Monitor checkboxes
-  availableMonitors.forEach((monitor) => {
-    const checkbox = document.getElementById(`monitor-${monitor.id}`) as HTMLInputElement | null;
-    if (checkbox) {
-      checkbox.addEventListener('change', function (this: HTMLInputElement): void {
-        const monitorId = this.value;
-        if (this.checked) {
-          if (!currentSettings.selectedMonitors.includes(monitorId)) {
-            currentSettings.selectedMonitors.push(monitorId);
-          }
-        } else {
-          currentSettings.selectedMonitors = currentSettings.selectedMonitors.filter(
-            (id) => id !== monitorId
-          );
-        }
-        if (window.streamDeck) {
-          window.streamDeck.setSettings(currentSettings);
-        }
-      });
-    }
-  });
 });
+
+(window as any).connectElgatoStreamDeckSocket = connectElgatoStreamDeckSocket;
 
 export {};

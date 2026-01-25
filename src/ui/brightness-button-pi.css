@@ -1,0 +1,73 @@
+/* Button-specific styling */
+
+.mode-setting {
+  margin-left: 16px;
+  border-left: 2px solid #3d3d3d;
+  padding-left: 12px;
+}
+
+.cycle-values-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cycle-value-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.cycle-value-item input[type='range'] {
+  flex: 1;
+}
+
+.cycle-value-display {
+  min-width: 40px;
+  text-align: right;
+  font-weight: 500;
+}
+
+.cycle-value-remove {
+  padding: 4px 8px;
+  background: #c44;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: opacity 0.2s;
+}
+
+.cycle-value-remove:hover {
+  opacity: 0.8;
+}
+
+.sdpi-item-value input[type='range'] {
+  margin-bottom: 4px;
+}
+
+details {
+  margin-top: 12px;
+}
+
+details summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  user-select: none;
+}
+
+details summary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+details[open] summary {
+  margin-bottom: 12px;
+}

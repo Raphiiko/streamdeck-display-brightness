@@ -53,15 +53,28 @@ function copyUiAssets(sdPlugin) {
       const destDir = path.join(sdPlugin, 'ui');
 
       // Copy HTML
-      const htmlSrc = 'src/ui/brightness-pi.html';
-      const htmlDest = path.join(destDir, 'brightness-pi.html');
+      const dialHtmlSrc = 'src/ui/brightness-dial-pi.html';
+      const dialHtmlDest = path.join(destDir, 'brightness-dial-pi.html');
       fs.mkdirSync(destDir, { recursive: true });
-      fs.copyFileSync(htmlSrc, htmlDest);
+      fs.copyFileSync(dialHtmlSrc, dialHtmlDest);
+
+      const buttonHtmlSrc = 'src/ui/brightness-button-pi.html';
+      const buttonHtmlDest = path.join(destDir, 'brightness-button-pi.html');
+      fs.copyFileSync(buttonHtmlSrc, buttonHtmlDest);
 
       // Copy component CSS
-      const cssSrc = 'src/ui/brightness-pi.css';
-      const cssDest = path.join(destDir, 'brightness-pi.css');
-      fs.copyFileSync(cssSrc, cssDest);
+      const dialCssSrc = 'src/ui/brightness-dial-pi.css';
+      const dialCssDest = path.join(destDir, 'brightness-dial-pi.css');
+      fs.copyFileSync(dialCssSrc, dialCssDest);
+
+      const buttonCssSrc = 'src/ui/brightness-button-pi.css';
+      const buttonCssDest = path.join(destDir, 'brightness-button-pi.css');
+      fs.copyFileSync(buttonCssSrc, buttonCssDest);
+
+      // Copy shared CSS
+      const sharedCssSrc = 'src/ui/shared-pi.css';
+      const sharedCssDest = path.join(destDir, 'shared-pi.css');
+      fs.copyFileSync(sharedCssSrc, sharedCssDest);
 
       // Copy Stream Deck PI CSS
       const sdpiCssSrc = 'src/ui/sdpi.css';
@@ -142,11 +155,31 @@ const configs = [
       copyStaticAssets(sdPlugin),
     ],
   },
-  // UI property inspector
+  // UI property inspector for dial action
   {
-    input: 'src/ui/brightness-pi.ts',
+    input: 'src/ui/brightness-dial-pi.ts',
     output: {
-      file: `${sdPlugin}/ui/brightness-pi.js`,
+      file: `${sdPlugin}/ui/brightness-dial-pi.js`,
+      format: 'iife',
+      sourcemap: isWatching,
+    },
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.ui.json',
+      }),
+      nodeResolve({
+        browser: true,
+      }),
+      commonjs(),
+      !isWatching && terser(),
+      copyUiAssets(sdPlugin),
+    ],
+  },
+  // UI property inspector for button action
+  {
+    input: 'src/ui/brightness-button-pi.ts',
+    output: {
+      file: `${sdPlugin}/ui/brightness-button-pi.js`,
       format: 'iife',
       sourcemap: isWatching,
     },

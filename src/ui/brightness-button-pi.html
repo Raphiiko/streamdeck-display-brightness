@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brightness Control (Button)</title>
+    <link rel="stylesheet" href="sdpi.css" />
+    <link rel="stylesheet" href="shared-pi.css" />
+    <link rel="stylesheet" href="brightness-button-pi.css" />
+  </head>
+  <body>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Monitors</div>
+      <div id="monitor-container">
+        <div class="no-monitors">Refreshing...</div>
+      </div>
+      <button class="sdpi-item-value refresh-btn" id="refresh-monitors-btn">
+        Refresh Monitor List
+      </button>
+    </div>
+
+      <div class="sdpi-item">
+        <div class="sdpi-item-label">Mode</div>
+        <div class="sdpi-item-value">
+          <select id="operation-mode" class="sdpi-item-value select">
+            <option value="increase">Increase Brightness</option>
+            <option value="decrease">Decrease Brightness</option>
+            <option value="set">Set to Value</option>
+            <option value="toggle">Toggle Between Two Values</option>
+            <option value="cycle">Cycle Through Values</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="step-size-container" class="sdpi-item mode-setting">
+          <div class="sdpi-item-label">Step Size</div>
+          <div class="sdpi-item-value">
+            <input
+              id="step-size"
+              type="range"
+              min="1"
+              max="100"
+              value="10"
+              class="sdpi-item-value"
+            />
+            <div class="sdpi-item-value"><span id="step-size-value">10</span>%</div>
+          </div>
+        </div>
+
+        <div id="set-value-container" class="sdpi-item mode-setting" style="display: none">
+          <div class="sdpi-item-label">Target Brightness</div>
+          <div class="sdpi-item-value">
+            <input
+              id="set-value"
+              type="range"
+              min="0"
+              max="100"
+              value="100"
+              class="sdpi-item-value"
+            />
+            <div class="sdpi-item-value"><span id="set-value-display">100</span>%</div>
+          </div>
+        </div>
+
+        <div id="toggle-settings-container" class="mode-setting" style="display: none">
+          <div class="sdpi-item">
+            <div class="sdpi-item-label">Value 1</div>
+            <div class="sdpi-item-value">
+              <input
+                id="toggle-value-1"
+                type="range"
+                min="0"
+                max="100"
+                value="0"
+                class="sdpi-item-value"
+              />
+              <div class="sdpi-item-value"><span id="toggle-value-1-display">0</span>%</div>
+            </div>
+          </div>
+
+          <div class="sdpi-item">
+            <div class="sdpi-item-label">Value 2</div>
+            <div class="sdpi-item-value">
+              <input
+                id="toggle-value-2"
+                type="range"
+                min="0"
+                max="100"
+                value="100"
+                class="sdpi-item-value"
+              />
+              <div class="sdpi-item-value"><span id="toggle-value-2-display">100</span>%</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cycle-settings-container" class="mode-setting" style="display: none">
+          <div class="sdpi-item">
+            <div class="sdpi-item-label">Cycle Values</div>
+            <div class="sdpi-item-value">
+              <div id="cycle-values-list" class="cycle-values-list"></div>
+              <button id="add-cycle-value-btn" class="sdpi-item-value">Add Value</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sdpi-item">
+        <div class="section-header" id="advanced-header">
+          <span id="advancedToggle" class="section-toggle collapsed">&#9660;</span>
+          <span>Advanced Settings</span>
+        </div>
+      </div>
+
+      <div id="advancedSection" class="section-content collapsed">
+        <div class="sdpi-item">
+          <div class="sdpi-item-label">DDC Write Throttle</div>
+          <div class="slider-container">
+            <input
+              id="ddc-write-throttle"
+              type="range"
+              min="10"
+              max="5000"
+              value="500"
+              step="10"
+              class="sdpi-item-value"
+            />
+            <span id="ddc-write-throttle-value" class="slider-value">500ms</span>
+          </div>
+          <div class="sdpi-info">Minimum time between DDC write commands (default: 500ms).</div>
+        </div>
+
+        <div class="sdpi-item">
+          <div class="sdpi-item-label">Enforcement Duration</div>
+          <div class="slider-container">
+            <input
+              id="enforcement-duration"
+              type="range"
+              min="1000"
+              max="30000"
+              value="10000"
+              step="500"
+              class="sdpi-item-value"
+            />
+            <span id="enforcement-duration-value" class="slider-value">10000ms</span>
+          </div>
+          <div class="sdpi-info">
+            Duration to keep retrying brightness writes after user input (default: 10000ms).
+          </div>
+        </div>
+
+        <div class="sdpi-item">
+          <div class="sdpi-item-label">Enforcement Interval</div>
+          <div class="slider-container">
+            <input
+              id="enforcement-interval"
+              type="range"
+              min="100"
+              max="5000"
+              value="500"
+              step="100"
+              class="sdpi-item-value"
+            />
+            <span id="enforcement-interval-value" class="slider-value">500ms</span>
+          </div>
+          <div class="sdpi-info">
+            Interval between retry attempts when enforcing brightness (default: 500ms).
+          </div>
+        </div>
+
+        <div class="sdpi-item">
+          <div class="sdpi-item-label">Poll Interval</div>
+          <div class="slider-container">
+            <input
+              id="poll-interval"
+              type="range"
+              min="10"
+              max="10000"
+              value="3000"
+              step="10"
+              class="sdpi-item-value"
+            />
+            <span id="poll-interval-value" class="slider-value">3000ms</span>
+          </div>
+          <div class="sdpi-info">Interval for polling monitor brightness (default: 3000ms).</div>
+        </div>
+      </div>
+
+    <script src="brightness-button-pi.js"></script>
+  </body>
+</html>

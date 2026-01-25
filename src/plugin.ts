@@ -1,6 +1,7 @@
 import streamDeck from '@elgato/streamdeck';
 import { Subscription, mergeMap, groupBy, switchMap } from 'rxjs';
-import { BrightnessAction } from './actions/brightness-action';
+import { BrightnessDialAction } from './actions/brightness-dial-action';
+import { BrightnessButtonAction } from './actions/brightness-button-action';
 import { MonitorManager } from './services/monitor-manager';
 import { BrightnessStore } from './services/brightness-store';
 import { GlobalSettings } from './types/settings';
@@ -98,7 +99,8 @@ monitorManager
     streamDeck.logger.error('Failed to initialize monitor manager', err);
   });
 
-streamDeck.actions.registerAction(new BrightnessAction());
+streamDeck.actions.registerAction(new BrightnessDialAction());
+streamDeck.actions.registerAction(new BrightnessButtonAction());
 void streamDeck.connect();
 
 process.on('SIGTERM', () => {

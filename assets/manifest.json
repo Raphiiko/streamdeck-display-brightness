@@ -38,12 +38,27 @@
           "LongTouch": "Set to 0%"
         }
       },
-      "PropertyInspectorPath": "ui/brightness-pi.html",
+      "PropertyInspectorPath": "ui/brightness-dial-pi.html",
       "States": [
         {
           "Image": "imgs/actions/brightness/dial"
         }
       ]
+    },
+    {
+      "Name": "Brightness Control (Button)",
+      "UUID": "com.raphiiko.sdbrightness.button",
+      "Icon": "imgs/actions/brightness/icon",
+      "Tooltip": "Control monitor brightness with a button",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/brightness/dial"
+        }
+      ],
+      "PropertyInspectorPath": "ui/brightness-button-pi.html",
+      "SupportedInMultiActions": true,
+      "UserTitleEnabled": false
     }
   ],
   "UUID": "com.raphiiko.sdbrightness"
