@@ -8,9 +8,9 @@
   "Category": "Display Brightness Control",
   "CategoryIcon": "imgs/plugin/category-icon",
   "CodePath": "bin/plugin.js",
-  "SDKVersion": 2,
+  "SDKVersion": 3,
   "Software": {
-    "MinimumVersion": "6.5"
+    "MinimumVersion": "6.9"
   },
   "URL": "https://raphii.co",
   "OS": [
