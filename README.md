@@ -10,11 +10,22 @@ Control the brightness of your displays directly from your Stream Deck using [DD
 
 ## Features
 
-![Demo](docs/demo.gif)
+<table>
+<tr>
+<td width="50%">
 
 - **Dial Control**: Adjust brightness by rotating a Stream Deck dial
 - **Button Control**: Quick brightness presets or cycle through values with button presses
 - **Multi-Monitor Support**: Control individual monitors or multiple monitors at once
+
+</td>
+<td width="50%">
+
+![Demo](docs/demo.gif)
+
+</td>
+</tr>
+</table>
 
 ## Actions
 
