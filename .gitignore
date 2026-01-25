@@ -5,7 +5,7 @@ node_modules/
 dist/
 
 # Old plugin folder (can be removed after migration)
-com.raphiiko.sdbrightness.sdPlugin/
+co.raphii.streamdeck-display-brightness.sdPlugin/
 
 # IDE settings
 .claude/

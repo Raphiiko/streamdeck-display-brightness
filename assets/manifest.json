@@ -3,7 +3,7 @@
   "Name": "Display Brightness Control",
   "Version": "1.0.0.0",
   "Author": "Raphiiko",
-  "Description": "Control monitor brightness via DDC/CI using Stream Deck+ dials",
+  "Description": "Control display brightness via DDC/CI using Stream Deck+ dials",
   "Icon": "imgs/plugin/marketplace",
   "Category": "Display Brightness Control",
   "CategoryIcon": "imgs/plugin/category-icon",
@@ -12,6 +12,7 @@
   "Software": {
     "MinimumVersion": "6.5"
   },
+  "URL": "https://raphii.co",
   "OS": [
     {
       "Platform": "windows",
@@ -24,10 +25,10 @@
   },
   "Actions": [
     {
-      "Name": "Brightness Control",
-      "UUID": "com.raphiiko.sdbrightness.control",
+      "Name": "Display Brightness Control (Dial)",
+      "UUID": "co.raphii.streamdeck-display-brightness.dial",
       "Icon": "imgs/actions/brightness/icon",
-      "Tooltip": "Control monitor brightness via DDC/CI",
+      "Tooltip": "Control display brightness via DDC/CI",
       "Controllers": ["Encoder"],
       "Encoder": {
         "layout": "$B1",
@@ -46,10 +47,10 @@
       ]
     },
     {
-      "Name": "Brightness Control (Button)",
-      "UUID": "com.raphiiko.sdbrightness.button",
+      "Name": "Display Brightness Control (Button)",
+      "UUID": "co.raphii.streamdeck-display-brightness.button",
       "Icon": "imgs/actions/brightness/icon",
-      "Tooltip": "Control monitor brightness with a button",
+      "Tooltip": "Control display brightness with a button",
       "Controllers": ["Keypad"],
       "States": [
         {
@@ -58,8 +59,8 @@
       ],
       "PropertyInspectorPath": "ui/brightness-button-pi.html",
       "SupportedInMultiActions": true,
-      "UserTitleEnabled": false
+      "UserTitleEnabled": true
     }
   ],
-  "UUID": "com.raphiiko.sdbrightness"
+  "UUID": "co.raphii.streamdeck-display-brightness"
 }

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <mask id="brightness-cutout">
+      <!-- Everything white is visible -->
+      <rect width="100%" height="100%" fill="white"/>
+      <!-- Everything black is cut out (the brightness icon) -->
+      <g fill="black" transform="translate(256, 220)">
+        <!-- Sun center -->
+        <circle cx="0" cy="0" r="32" />
+        <!-- Rays -->
+        <g stroke="black" stroke-width="14" stroke-linecap="round">
+          <line x1="0" y1="-55" x2="0" y2="-75" />
+          <line x1="38.89" y1="-38.89" x2="53.03" y2="-53.03" />
+          <line x1="55" y1="0" x2="75" y2="0" />
+          <line x1="38.89" y1="38.89" x2="53.03" y2="53.03" />
+          <line x1="0" y1="55" x2="0" y2="75" />
+          <line x1="-38.89" y1="38.89" x2="-53.03" y2="53.03" />
+          <line x1="-55" y1="0" x2="-75" y2="0" />
+          <line x1="-38.89" y1="-38.89" x2="-53.03" y2="-53.03" />
+        </g>
+      </g>
+    </mask>
+  </defs>
+  
+  <g fill="#ffffff" mask="url(#brightness-cutout)">
+    <!-- Monitor Bezel/Screen -->
+    <rect x="56" y="80" width="400" height="280" rx="30" />
+    <!-- Stand Neck - made significantly shorter (80 -> 25) -->
+    <rect x="226" y="360" width="60" height="25" />
+    <!-- Stand Base - moved up to meet the shorter neck -->
+    <rect x="156" y="385" width="200" height="30" rx="4" />
+  </g>
+</svg>

@@ -8,12 +8,20 @@
     <link rel="stylesheet" href="brightness-dial-pi.css" />
   </head>
   <body>
+    <div class="creator-header">
+      <span class="creator-name">By Raphiiko</span>
+      <div class="creator-links">
+        <a href="#" data-url="https://github.com/Raphiiko/streamdeck-display-brightness">GitHub</a>
+        <a href="#" data-url="https://raphii.co">Website</a>
+        <a href="#" data-url="https://x.com/Raphiiko">X.com</a>
+      </div>
+    </div>
     <div class="sdpi-item">
-      <div class="sdpi-item-label">Monitors</div>
+      <div class="sdpi-item-label">Displays</div>
       <div id="monitor-container">
         <div class="no-monitors">Refreshing...</div>
       </div>
-      <button class="sdpi-item-value refresh-btn" id="refresh-btn">Refresh Monitor List</button>
+      <button class="sdpi-item-value refresh-btn" id="refresh-btn">Refresh Display List</button>
     </div>
 
     <div class="sdpi-item">
@@ -44,12 +52,14 @@
             id="ddcWriteThrottleMs"
             min="10"
             max="5000"
-            value="500"
+            value="__DEFAULT_DDC_WRITE_THROTTLE_MS__"
             step="10"
           />
-          <span id="ddcWriteValue" class="slider-value">500ms</span>
+          <span id="ddcWriteValue" class="slider-value">__DEFAULT_DDC_WRITE_THROTTLE_MS__ms</span>
         </div>
-        <div class="sdpi-info">Minimum time between DDC write commands (default: 500ms).</div>
+        <div class="sdpi-info">
+          Minimum time between DDC write commands (default: __DEFAULT_DDC_WRITE_THROTTLE_MS__ms).
+        </div>
       </div>
 
       <div class="sdpi-item">
@@ -61,13 +71,16 @@
             id="enforcementDurationMs"
             min="1000"
             max="30000"
-            value="10000"
+            value="__DEFAULT_ENFORCEMENT_DURATION_MS__"
             step="500"
           />
-          <span id="enforcementDurationValue" class="slider-value">10000ms</span>
+          <span id="enforcementDurationValue" class="slider-value"
+            >__DEFAULT_ENFORCEMENT_DURATION_MS__ms</span
+          >
         </div>
         <div class="sdpi-info">
-          Duration to keep retrying brightness writes after user input (default: 10000ms).
+          Duration to keep retrying brightness writes after user input (default:
+          __DEFAULT_ENFORCEMENT_DURATION_MS__ms).
         </div>
       </div>
 
@@ -80,13 +93,16 @@
             id="enforcementIntervalMs"
             min="100"
             max="5000"
-            value="500"
+            value="__DEFAULT_ENFORCEMENT_INTERVAL_MS__"
             step="100"
           />
-          <span id="enforcementIntervalValue" class="slider-value">500ms</span>
+          <span id="enforcementIntervalValue" class="slider-value"
+            >__DEFAULT_ENFORCEMENT_INTERVAL_MS__ms</span
+          >
         </div>
         <div class="sdpi-info">
-          Interval between retry attempts when enforcing brightness (default: 500ms).
+          Interval between retry attempts when enforcing brightness (default:
+          __DEFAULT_ENFORCEMENT_INTERVAL_MS__ms).
         </div>
       </div>
 
@@ -99,12 +115,14 @@
             id="pollIntervalMs"
             min="10"
             max="10000"
-            value="3000"
+            value="__DEFAULT_POLL_INTERVAL_MS__"
             step="10"
           />
-          <span id="pollValue" class="slider-value">3000ms</span>
+          <span id="pollValue" class="slider-value">__DEFAULT_POLL_INTERVAL_MS__ms</span>
         </div>
-        <div class="sdpi-info">Interval for polling monitor brightness (default: 3000ms).</div>
+        <div class="sdpi-info">
+          Interval for polling monitor brightness (default: __DEFAULT_POLL_INTERVAL_MS__ms).
+        </div>
       </div>
     </div>
 

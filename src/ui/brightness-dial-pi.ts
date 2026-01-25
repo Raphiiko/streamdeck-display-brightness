@@ -1,21 +1,26 @@
 import type { GlobalSettings } from '../types/settings';
 import type { StreamDeck, Monitor, DialSettings } from './shared-types';
+import {
+  DEFAULT_DDC_WRITE_THROTTLE_MS,
+  DEFAULT_ENFORCEMENT_DURATION_MS,
+  DEFAULT_ENFORCEMENT_INTERVAL_MS,
+  DEFAULT_POLL_INTERVAL_MS,
+} from '../globals';
 
 let currentSettings: DialSettings = {
   selectedMonitors: [],
   stepSize: 5,
 };
 let globalSettings: GlobalSettings = {
-  ddcWriteThrottleMs: 1000,
-  enforcementDurationMs: 10000,
-  enforcementIntervalMs: 1000,
-  pollIntervalMs: 5000,
+  ddcWriteThrottleMs: DEFAULT_DDC_WRITE_THROTTLE_MS,
+  enforcementDurationMs: DEFAULT_ENFORCEMENT_DURATION_MS,
+  enforcementIntervalMs: DEFAULT_ENFORCEMENT_INTERVAL_MS,
+  pollIntervalMs: DEFAULT_POLL_INTERVAL_MS,
 };
 let availableMonitors: Monitor[] = [];
 let isInitialized = false;
 let advancedExpanded = false;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function connectElgatoStreamDeckSocket(
   inPort: string,
   inUUID: string,
@@ -213,6 +218,12 @@ function renderMonitorList(): void {
   attachMonitorCheckboxListeners();
 }
 
+function openUrl(url: string): void {
+  if (window.streamDeck) {
+    window.streamDeck.send({ event: 'openUrl', payload: { url } });
+  }
+}
+
 function attachMonitorCheckboxListeners(): void {
   availableMonitors.forEach((monitor) => {
     const checkbox = document.getElementById(`monitor-${monitor.id}`) as HTMLInputElement | null;
@@ -326,8 +337,21 @@ document.addEventListener('DOMContentLoaded', function (): void {
       }
     });
   }
+
+  // Creator links
+  const creatorLinks = document.querySelectorAll('.creator-links a');
+  creatorLinks.forEach((link) => {
+    link.addEventListener('click', function (this: HTMLAnchorElement, e: Event): void {
+      e.preventDefault();
+      const url = this.getAttribute('data-url');
+      if (url) {
+        openUrl(url);
+      }
+    });
+  });
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 (window as any).connectElgatoStreamDeckSocket = connectElgatoStreamDeckSocket;
 
 export {};

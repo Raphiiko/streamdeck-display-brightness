@@ -24,7 +24,7 @@ interface ActionInstanceMethods {
   }): Promise<void>;
 }
 
-@action({ UUID: 'com.raphiiko.sdbrightness.control' })
+@action({ UUID: 'co.raphii.streamdeck-display-brightness.dial' })
 export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
   private monitorManager = MonitorManager.getInstance();
   private brightnessStore = BrightnessStore.getInstance();

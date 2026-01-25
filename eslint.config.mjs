@@ -9,8 +9,8 @@ export default [
       'bin/',
       '*.js',
       '*.mjs',
-      'com.raphiiko.sdbrightness.sdPlugin/bin/',
-      'com.raphiiko.sdbrightness.sdPlugin/node_modules/',
+      'co.raphii.streamdeck-display-brightness.sdPlugin/bin/',
+      'co.raphii.streamdeck-display-brightness.sdPlugin/node_modules/',
     ],
   },
   {

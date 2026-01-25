@@ -1,7 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 
 import type { BrightnessButtonSettings, GlobalSettings } from '../types/settings';
 import type { StreamDeck, Monitor } from './shared-types';
+import {
+  DEFAULT_DDC_WRITE_THROTTLE_MS,
+  DEFAULT_ENFORCEMENT_DURATION_MS,
+  DEFAULT_ENFORCEMENT_INTERVAL_MS,
+  DEFAULT_POLL_INTERVAL_MS,
+} from '../globals';
 
 let currentSettings: BrightnessButtonSettings = {
   selectedMonitors: [],
@@ -14,17 +20,16 @@ let currentSettings: BrightnessButtonSettings = {
 };
 
 let globalSettings: GlobalSettings = {
-  ddcWriteThrottleMs: 1000,
-  enforcementDurationMs: 10000,
-  enforcementIntervalMs: 1000,
-  pollIntervalMs: 5000,
+  ddcWriteThrottleMs: DEFAULT_DDC_WRITE_THROTTLE_MS,
+  enforcementDurationMs: DEFAULT_ENFORCEMENT_DURATION_MS,
+  enforcementIntervalMs: DEFAULT_ENFORCEMENT_INTERVAL_MS,
+  pollIntervalMs: DEFAULT_POLL_INTERVAL_MS,
 };
 
 let availableMonitors: Monitor[] = [];
 let isInitialized = false;
 let advancedExpanded = false;
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function connectElgatoStreamDeckSocket(
   inPort: string,
   inUUID: string,
@@ -32,7 +37,10 @@ function connectElgatoStreamDeckSocket(
   _inInfo: string,
   inActionInfo: string
 ): void {
-  const actionInfo = JSON.parse(inActionInfo) as { action: string; payload?: { settings?: BrightnessButtonSettings } };
+  const actionInfo = JSON.parse(inActionInfo) as {
+    action: string;
+    payload?: { settings?: BrightnessButtonSettings };
+  };
   const uuid = inUUID;
   const action = actionInfo.action;
 
@@ -91,7 +99,10 @@ function connectElgatoStreamDeckSocket(
     if (msg.event === inRegisterEvent) {
       streamDeck.uuid = uuid;
     } else if (msg.event === 'didReceiveSettings' && msg.payload?.settings) {
-      currentSettings = { ...currentSettings, ...(msg.payload.settings as BrightnessButtonSettings) };
+      currentSettings = {
+        ...currentSettings,
+        ...(msg.payload.settings as BrightnessButtonSettings),
+      };
       updateUI();
       if (isInitialized) {
         requestMonitorList();
@@ -166,8 +177,12 @@ function updateAdvancedSettingsUI() {
   const ddcThrottleSlider = document.getElementById('ddc-write-throttle') as HTMLInputElement;
   const ddcThrottleValue = document.getElementById('ddc-write-throttle-value');
   if (ddcThrottleSlider && ddcThrottleValue) {
-    ddcThrottleSlider.value = String(globalSettings.ddcWriteThrottleMs ?? 1000);
-    ddcThrottleValue.textContent = String(globalSettings.ddcWriteThrottleMs ?? 1000);
+    ddcThrottleSlider.value = String(
+      globalSettings.ddcWriteThrottleMs ?? DEFAULT_DDC_WRITE_THROTTLE_MS
+    );
+    ddcThrottleValue.textContent = String(
+      globalSettings.ddcWriteThrottleMs ?? DEFAULT_DDC_WRITE_THROTTLE_MS
+    );
   }
 
   const enforcementDurationSlider = document.getElementById(
@@ -175,8 +190,12 @@ function updateAdvancedSettingsUI() {
   ) as HTMLInputElement;
   const enforcementDurationValue = document.getElementById('enforcement-duration-value');
   if (enforcementDurationSlider && enforcementDurationValue) {
-    enforcementDurationSlider.value = String(globalSettings.enforcementDurationMs ?? 10000);
-    enforcementDurationValue.textContent = String(globalSettings.enforcementDurationMs ?? 10000);
+    enforcementDurationSlider.value = String(
+      globalSettings.enforcementDurationMs ?? DEFAULT_ENFORCEMENT_DURATION_MS
+    );
+    enforcementDurationValue.textContent = String(
+      globalSettings.enforcementDurationMs ?? DEFAULT_ENFORCEMENT_DURATION_MS
+    );
   }
 
   const enforcementIntervalSlider = document.getElementById(
@@ -184,15 +203,21 @@ function updateAdvancedSettingsUI() {
   ) as HTMLInputElement;
   const enforcementIntervalValue = document.getElementById('enforcement-interval-value');
   if (enforcementIntervalSlider && enforcementIntervalValue) {
-    enforcementIntervalSlider.value = String(globalSettings.enforcementIntervalMs ?? 1000);
-    enforcementIntervalValue.textContent = String(globalSettings.enforcementIntervalMs ?? 1000);
+    enforcementIntervalSlider.value = String(
+      globalSettings.enforcementIntervalMs ?? DEFAULT_ENFORCEMENT_INTERVAL_MS
+    );
+    enforcementIntervalValue.textContent = String(
+      globalSettings.enforcementIntervalMs ?? DEFAULT_ENFORCEMENT_INTERVAL_MS
+    );
   }
 
   const pollIntervalSlider = document.getElementById('poll-interval') as HTMLInputElement;
   const pollIntervalValue = document.getElementById('poll-interval-value');
   if (pollIntervalSlider && pollIntervalValue) {
-    pollIntervalSlider.value = String(globalSettings.pollIntervalMs ?? 5000);
-    pollIntervalValue.textContent = String(globalSettings.pollIntervalMs ?? 5000);
+    pollIntervalSlider.value = String(globalSettings.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS);
+    pollIntervalValue.textContent = String(
+      globalSettings.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS
+    );
   }
 }
 
@@ -253,6 +278,12 @@ function renderMonitorList(): void {
     '</div>';
 
   attachMonitorCheckboxListeners();
+}
+
+function openUrl(url: string): void {
+  if (window.streamDeck) {
+    window.streamDeck.send({ event: 'openUrl', payload: { url } });
+  }
 }
 
 function attachMonitorCheckboxListeners(): void {
@@ -519,6 +550,18 @@ document.addEventListener('DOMContentLoaded', function (): void {
       }
     });
   }
+
+  // Creator links
+  const creatorLinks = document.querySelectorAll('.creator-links a');
+  creatorLinks.forEach((link) => {
+    link.addEventListener('click', function (this: HTMLAnchorElement, e: Event): void {
+      e.preventDefault();
+      const url = this.getAttribute('data-url');
+      if (url) {
+        openUrl(url);
+      }
+    });
+  });
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

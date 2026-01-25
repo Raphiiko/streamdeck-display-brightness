@@ -51,16 +51,38 @@ function copyUiAssets(sdPlugin) {
     name: 'copy-ui-assets',
     writeBundle() {
       const destDir = path.join(sdPlugin, 'ui');
+      fs.mkdirSync(destDir, { recursive: true });
 
-      // Copy HTML
+      // Read globals.ts to extract default values
+      const globalsContent = fs.readFileSync('src/globals.ts', 'utf-8');
+      const extractDefault = (name) => {
+        const match = globalsContent.match(new RegExp(`export const ${name}\\s*=\\s*(\\d+)`));
+        return match ? match[1] : '0';
+      };
+      const DEFAULT_DDC_WRITE_THROTTLE_MS = extractDefault('DEFAULT_DDC_WRITE_THROTTLE_MS');
+      const DEFAULT_ENFORCEMENT_DURATION_MS = extractDefault('DEFAULT_ENFORCEMENT_DURATION_MS');
+      const DEFAULT_ENFORCEMENT_INTERVAL_MS = extractDefault('DEFAULT_ENFORCEMENT_INTERVAL_MS');
+      const DEFAULT_POLL_INTERVAL_MS = extractDefault('DEFAULT_POLL_INTERVAL_MS');
+
+      // Replace placeholders in HTML and copy
+      const replaceDefaults = (html) => {
+        return html
+          .replace(/__DEFAULT_DDC_WRITE_THROTTLE_MS__/g, DEFAULT_DDC_WRITE_THROTTLE_MS)
+          .replace(/__DEFAULT_ENFORCEMENT_DURATION_MS__/g, DEFAULT_ENFORCEMENT_DURATION_MS)
+          .replace(/__DEFAULT_ENFORCEMENT_INTERVAL_MS__/g, DEFAULT_ENFORCEMENT_INTERVAL_MS)
+          .replace(/__DEFAULT_POLL_INTERVAL_MS__/g, DEFAULT_POLL_INTERVAL_MS);
+      };
+
+      // Copy and process HTML
       const dialHtmlSrc = 'src/ui/brightness-dial-pi.html';
       const dialHtmlDest = path.join(destDir, 'brightness-dial-pi.html');
-      fs.mkdirSync(destDir, { recursive: true });
-      fs.copyFileSync(dialHtmlSrc, dialHtmlDest);
+      const dialHtmlContent = fs.readFileSync(dialHtmlSrc, 'utf-8');
+      fs.writeFileSync(dialHtmlDest, replaceDefaults(dialHtmlContent));
 
       const buttonHtmlSrc = 'src/ui/brightness-button-pi.html';
       const buttonHtmlDest = path.join(destDir, 'brightness-button-pi.html');
-      fs.copyFileSync(buttonHtmlSrc, buttonHtmlDest);
+      const buttonHtmlContent = fs.readFileSync(buttonHtmlSrc, 'utf-8');
+      fs.writeFileSync(buttonHtmlDest, replaceDefaults(buttonHtmlContent));
 
       // Copy component CSS
       const dialCssSrc = 'src/ui/brightness-dial-pi.css';
@@ -106,7 +128,7 @@ function copyStaticAssets(sdPlugin) {
 }
 
 const isWatching = !!process.env.ROLLUP_WATCH;
-const sdPlugin = 'dist/com.raphiiko.sdbrightness.sdPlugin';
+const sdPlugin = 'dist/co.raphii.streamdeck-display-brightness.sdPlugin';
 
 /**
  * @type {import('rollup').RollupOptions[]}

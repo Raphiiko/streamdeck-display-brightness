@@ -1,105 +1,98 @@
-# DDC Brightness Control Plugin for Stream Deck+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo_dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/logo_light.png">
+  <img alt="Display Brightness Plugin for Stream Deck" src="docs/logo_light.png">
+</picture>
 
-A Stream Deck+ plugin that controls monitor brightness via DDC/CI protocol using dial interface.
+Control the brightness of your displays directly from your Stream Deck using [DDC/CI](https://en.wikipedia.org/wiki/Display_Data_Channel) (Display Data Channel). 
+
+[![Download on Elgato Marketplace](https://img.shields.io/badge/Download-Elgato%20Marketplace-blue)](https://marketplace.elgato.com/product/display-brightness)
 
 ## Features
 
-- Dial-based brightness control
-- Multi-monitor support (control multiple monitors simultaneously)
-- Real-time brightness feedback on dial display
-- Cross-dial synchronization (when multiple dials control same monitor)
-- Average brightness display when multiple monitors are selected
-- Configurable step size for dial rotation
+![Demo](docs/demo.gif)
+
+- **Dial Control**: Adjust brightness by rotating a Stream Deck dial
+- **Button Control**: Quick brightness presets or cycle through values with button presses
+- **Multi-Monitor Support**: Control individual monitors or multiple monitors at once
+
+## Actions
+
+### Display Brightness Control (Dial)
+
+For devices like the Stream Deck+ with built-in dials. Rotate to adjust brightness, tap for quick actions.
+
+<table>
+<tr>
+<td width="50%">
+
+**Features:**
+- Control individual displays or multiple displays at once
+- Rotate the dial to adjust display brightness
+- Press the dial to toggle between 0% and 100% brightness
+- Tap display for 100% brightness
+- Hold display for 0% brightness
+- Customizable step size
+
+</td>
+<td width="50%">
+
+![Dial Settings](docs/dial_settings.png)
+
+</td>
+</tr>
+</table>
+
+### Display Brightness Control (Button)
+
+Works with any Stream Deck model. Choose from multiple modes to control your brightness.
+
+<table>
+<tr>
+<td width="50%">
+
+**Available Modes:**
+
+- **Cycle Through Values**: Press to cycle through preset brightness levels (e.g., 0%, 25%, 50%, 75%, 100%)
+- **Set to Value**: Set brightness to a specific percentage when pressed
+- **Toggle**: Toggle between two configurable brightness values
+- **Increase/Decrease**: Increment or decrement brightness by a fixed step
+
+Control individual displays or all monitors at once.
+
+</td>
+<td width="50%">
+
+![Button Settings](docs/button_settings.png)
+
+</td>
+</tr>
+</table>
 
 ## Requirements
 
-- Stream Deck+ device
-- Stream Deck software version 6.9 or higher
-- Windows 10 or later
-- DDC/CI compatible monitors
-- Node.js 20+
+- Stream Deck software (version 6.0 or later)
+- Windows operating system
+- Monitor(s) that support DDC/CI control
 
-## Installation
-
-1. Double-click `com.raphiiko.sdbrightness.sdPlugin` to install plugin
-2. Restart Stream Deck software
-3. Drag "Brightness Control" action to a dial slot
-
-## Configuration
-
-1. Click the dial to open the Property Inspector
-2. Select one or more monitors from the list
-3. Adjust the step size slider (1-20) to control brightness change per tick
-4. Click "Refresh Monitor List" if monitors are not detected
-
-## Usage
-
-- **Rotate dial**: Adjust brightness for selected monitors
-- **Press dial**: Refresh monitor list
-- **Short tap**: (Currently unassigned)
-- **Long tap**: Set brightness to 50%
+**Note**: Most modern monitors support DDC/CI, but some may require enabling it in the monitor's OSD menu.
 
 ## Troubleshooting
 
-### Monitors not detected
+**Monitor not appearing in the list?**
+- Ensure DDC/CI is enabled in your monitor's settings (usually in the OSD menu)
+- Try clicking the **Refresh Display List** button
+- Some monitors may not support DDC/CI control
 
-1. Ensure your monitor supports DDC/CI
-2. Try a different cable (DisplayPort or HDMI)
-3. USB-C connections may not support DDC/CI
-4. Click "Refresh Monitor List" in the Property Inspector
-5. Check that Windows Display settings recognizes the monitor
-
-### Plugin not loading
-
-1. Ensure Stream Deck software is version 6.9 or higher
-2. Check logs in `com.raphiiko.sdbrightness.sdPlugin/logs/`
-3. Verify Node.js 20+ is installed
-4. Reinstall the plugin
-
-### Build issues
-
-**Note**: This plugin uses `@ddc-node/ddc-node` (Rust-based), which has prebuilt binaries for Windows. No Python or build tools are required!
-
-```bash
-cd sdbrightness
-npm install
-npm run build
-```
-
-## Known Limitations
-
-- Windows only
-- Not all monitors support DDC/CI
-- Built-in laptop displays typically don't support DDC/CI
-- Some USB-C connections don't pass DDC signals
-- DDC/CI commands can be slow (~50ms per command)
-
-## Development
-
-```bash
-# Install dependencies
-cd sdbrightness
-npm install
-
-# Build
-npm run build
-
-# Watch mode (auto-rebuild on changes)
-npm run watch
-```
-
-## Technical Details
-
-- **Native Module**: `@ddc-node/ddc-node` (Rust-based with prebuilt binaries)
-- **Protocol**: DDC/CI (Display Data Channel Command Interface)
-- **VCP Code**: Luminance (0x10)
-- **Architecture**: Observer pattern for cross-dial synchronization
+**Brightness not changing?**
+- Verify your monitor supports DDC/CI
+- Check that your monitor is connected via DisplayPort, HDMI, or DVI (USB-C monitors may have limited support)
+- Try adjusting the step size in the settings
 
 ## License
 
-MIT
+MIT License - see LICENSE file for details
 
-## Credits
+## Support
 
-- Built with [Elgato Stream Deck SDK](https://github.com/elgatosf/streamdeck-js)
-- DDC/CI support via [@ddc-node/ddc-node](https://github.com/ThalusA/ddc-node)
+Found a bug or have a feature request? Please open an issue on [GitHub](https://github.com/Raphiiko/sd-brightness/issues).

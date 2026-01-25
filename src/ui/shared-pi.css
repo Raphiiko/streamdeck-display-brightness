@@ -97,8 +97,38 @@
   min-width: 50px;
   text-align: right;
 }
-
 input[type='checkbox'] {
   width: auto;
   margin: 0;
+}
+
+/* Creator header */
+.creator-header {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #3d3d3d;
+}
+
+.creator-name {
+  font-weight: 500;
+}
+
+.creator-links {
+  display: flex;
+  gap: 12px;
+}
+
+.creator-links a {
+  color: #888;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.creator-links a:hover {
+  color: #fff;
 }

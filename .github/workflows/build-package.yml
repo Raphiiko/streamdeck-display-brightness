@@ -27,5 +27,5 @@ jobs:
       - name: Package the Stream Deck plugin
         uses: j4ckofalltrades/streamdeck-package@main
         with:
-          input-directory: dist/com.raphiiko.sdbrightness.sdPlugin
+          input-directory: dist/co.raphii.streamdeck-display-brightness.sdPlugin
           output-directory: release

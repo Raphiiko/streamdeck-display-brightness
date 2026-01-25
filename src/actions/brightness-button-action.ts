@@ -14,12 +14,12 @@ import { BrightnessStore } from '../services/brightness-store';
 
 interface KeyActionMethods {
   id: string;
-  setTitle(title: string): Promise<void>;
+  setImage(image: string): Promise<void>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sendToPropertyInspector?(payload: any): Promise<void>;
 }
 
-@action({ UUID: 'com.raphiiko.sdbrightness.button' })
+@action({ UUID: 'co.raphii.streamdeck-display-brightness.button' })
 export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSettings> {
   private monitorManager = MonitorManager.getInstance();
   private brightnessStore = BrightnessStore.getInstance();
@@ -190,8 +190,76 @@ export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSett
     await this.updateDisplayWithValue(ev, settings, brightness);
   }
 
+  private getBrightnessIcon(): string {
+    // Inline SVG icon (scaled down from 512x512 to fit in the button)
+    const iconSize = 64;
+    const scale = iconSize / 512;
+
+    return `
+      <g transform="translate(${72 - 256 * scale}, ${72 - 256 * scale}) scale(${scale})">
+        <defs>
+          <mask id="brightness-cutout">
+            <rect width="512" height="512" fill="white"/>
+            <g fill="black" transform="translate(256, 220)">
+              <circle cx="0" cy="0" r="32" />
+              <g stroke="black" stroke-width="14" stroke-linecap="round">
+                <line x1="0" y1="-55" x2="0" y2="-75" />
+                <line x1="38.89" y1="-38.89" x2="53.03" y2="-53.03" />
+                <line x1="55" y1="0" x2="75" y2="0" />
+                <line x1="38.89" y1="38.89" x2="53.03" y2="53.03" />
+                <line x1="0" y1="55" x2="0" y2="75" />
+                <line x1="-38.89" y1="38.89" x2="-53.03" y2="53.03" />
+                <line x1="-55" y1="0" x2="-75" y2="0" />
+                <line x1="-38.89" y1="-38.89" x2="-53.03" y2="-53.03" />
+              </g>
+            </g>
+          </mask>
+        </defs>
+        <g fill="#ffffff" mask="url(#brightness-cutout)">
+          <rect x="56" y="80" width="400" height="280" rx="30" />
+          <rect x="226" y="360" width="60" height="25" />
+          <rect x="156" y="385" width="200" height="30" rx="4" />
+        </g>
+      </g>
+    `;
+  }
+
   private async updateDisplayPlaceholder(ev: { action: KeyActionMethods }): Promise<void> {
-    await ev.action.setTitle('Select\nMonitor');
+    const size = 144;
+    const fontSize = 20;
+    const lineHeight = 24;
+
+    const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#000000" rx="0"/>
+      <text x="${size / 2}" y="${size / 2 - lineHeight / 2}" text-anchor="middle" dominant-baseline="middle"
+            font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="normal"
+            fill="#888888">Select</text>
+      <text x="${size / 2}" y="${size / 2 + lineHeight / 2}" text-anchor="middle" dominant-baseline="middle"
+            font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="normal"
+            fill="#888888">Monitor</text>
+    </svg>`;
+
+    const imageData = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+    await ev.action.setImage(imageData);
+  }
+
+  private createBrightnessSvg(percentage: number): string {
+    const size = 144;
+    const percentageFontSize = 24;
+
+    const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100%" height="100%" fill="#000000" rx="0"/>
+
+      <!-- Percentage at top -->
+      <text x="${size / 2}" y="20" text-anchor="middle" dominant-baseline="hanging"
+            font-family="Arial, sans-serif" font-size="${percentageFontSize}" font-weight="bold"
+            fill="#ffffff">${percentage}%</text>
+
+      <!-- Brightness icon in center -->
+      ${this.getBrightnessIcon()}
+    </svg>`;
+
+    return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
   }
 
   private async updateDisplayWithValue(
@@ -200,6 +268,7 @@ export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSett
     brightness: number
   ): Promise<void> {
     const percentage = Math.round(brightness);
-    await ev.action.setTitle(`${percentage}%`);
+    const svg = this.createBrightnessSvg(percentage);
+    await ev.action.setImage(svg);
   }
 }
