@@ -9,14 +9,34 @@ jobs:
   build-and-package:
     name: Build and Package Plugin
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Extract version from manifest
+        id: get_version
+        run: |
+          VERSION=$(jq -r '.Version' assets/manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "v${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Install dependencies
         run: npm ci
@@ -29,3 +49,14 @@ jobs:
         with:
           input-directory: dist/co.raphii.streamdeck-display-brightness.sdPlugin
           output-directory: release
+
+      - name: Create Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: Release ${{ steps.get_version.outputs.tag }}
+          files: release/*.streamDeckPlugin
+          generate_release_notes: true
+          draft: false
+          prerelease: false
