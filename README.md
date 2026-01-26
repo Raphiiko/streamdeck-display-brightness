@@ -6,8 +6,6 @@
 
 Control the brightness of your displays directly from your Stream Deck using [DDC/CI](https://en.wikipedia.org/wiki/Display_Data_Channel) (Display Data Channel).
 
-[![Download on Elgato Marketplace](https://img.shields.io/badge/Download-Elgato%20Marketplace-blue)](https://marketplace.elgato.com/product/display-brightness)
-
 ## Features
 
 <table>
@@ -109,4 +107,4 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-Found a bug or have a feature request? Please open an issue on [GitHub](https://github.com/Raphiiko/sd-brightness/issues).
+Found a bug or have a feature request? Please open an issue on [GitHub](https://github.com/Raphiiko/streamdeck-display-brightness/issues).
