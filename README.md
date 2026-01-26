@@ -4,7 +4,7 @@
   <img alt="Display Brightness Plugin for Stream Deck" src="docs/logo_light.png">
 </picture>
 
-Control the brightness of your displays directly from your Stream Deck using [DDC/CI](https://en.wikipedia.org/wiki/Display_Data_Channel) (Display Data Channel). 
+Control the brightness of your displays directly from your Stream Deck using [DDC/CI](https://en.wikipedia.org/wiki/Display_Data_Channel) (Display Data Channel).
 
 [![Download on Elgato Marketplace](https://img.shields.io/badge/Download-Elgato%20Marketplace-blue)](https://marketplace.elgato.com/product/display-brightness)
 
@@ -38,6 +38,7 @@ For devices like the Stream Deck+ with built-in dials. Rotate to adjust brightne
 <td width="50%">
 
 **Features:**
+
 - Control individual displays or multiple displays at once
 - Rotate the dial to adjust display brightness
 - Press the dial to toggle between 0% and 100% brightness
@@ -91,11 +92,13 @@ Control individual displays or all monitors at once.
 ## Troubleshooting
 
 **Monitor not appearing in the list?**
+
 - Ensure DDC/CI is enabled in your monitor's settings (usually in the OSD menu)
 - Try clicking the **Refresh Display List** button
 - Some monitors may not support DDC/CI control
 
 **Brightness not changing?**
+
 - Verify your monitor supports DDC/CI
 - Check that your monitor is connected via DisplayPort, HDMI, or DVI (USB-C monitors may have limited support)
 - Try adjusting the step size in the settings

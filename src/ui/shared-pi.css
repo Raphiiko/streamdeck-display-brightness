@@ -37,21 +37,12 @@
   color: #888;
 }
 
-/* Buttons */
-.refresh-btn {
-  width: 100%;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  color: inherit;
-  border: 1px solid #3d3d3d;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 8px;
-}
-
-.refresh-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+.pi-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  color: #888;
 }
 
 /* Collapsible sections */

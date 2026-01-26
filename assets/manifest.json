@@ -1,9 +1,9 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Display Brightness Control",
-  "Version": "1.0.0.0",
+  "Version": "1.0.1.0",
   "Author": "Raphiiko",
-  "Description": "Control display brightness via DDC/CI using Stream Deck+ dials",
+  "Description": "Control the brightness of external displays via DDC/CI",
   "Icon": "imgs/plugin/marketplace",
   "Category": "Display Brightness Control",
   "CategoryIcon": "imgs/plugin/category-icon",
@@ -13,6 +13,7 @@
     "MinimumVersion": "6.9"
   },
   "URL": "https://raphii.co",
+  "SupportURL": "https://github.com/Raphiiklo/streamdeck-display-brightness",
   "OS": [
     {
       "Platform": "windows",
@@ -21,7 +22,7 @@
   ],
   "Nodejs": {
     "Version": "20",
-    "Debug": "enabled"
+    "Debug": "--inspect=8084"
   },
   "Actions": [
     {

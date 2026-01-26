@@ -2,130 +2,14 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Brightness Control Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brightness Control (Dial)</title>
     <link rel="stylesheet" href="sdpi.css" />
     <link rel="stylesheet" href="shared-pi.css" />
     <link rel="stylesheet" href="brightness-dial-pi.css" />
   </head>
   <body>
-    <div class="creator-header">
-      <span class="creator-name">By Raphiiko</span>
-      <div class="creator-links">
-        <a href="#" data-url="https://github.com/Raphiiko/streamdeck-display-brightness">GitHub</a>
-        <a href="#" data-url="https://raphii.co">Website</a>
-        <a href="#" data-url="https://x.com/Raphiiko">X.com</a>
-      </div>
-    </div>
-    <div class="sdpi-item">
-      <div class="sdpi-item-label">Displays</div>
-      <div id="monitor-container">
-        <div class="no-monitors">Refreshing...</div>
-      </div>
-      <button class="sdpi-item-value refresh-btn" id="refresh-btn">Refresh Display List</button>
-    </div>
-
-    <div class="sdpi-item">
-      <div class="sdpi-item-label">Step Size</div>
-      <div class="sdpi-item-group">
-        <input type="range" class="sdpi-item-value" id="stepSize" min="1" max="20" value="5" />
-        <span id="stepValue" class="sdpi-item-value">5</span>
-      </div>
-      <div class="sdpi-info">
-        Step size determines how much of brightness changes per dial tick.
-      </div>
-    </div>
-
-    <div class="sdpi-item">
-      <div class="section-header" id="advanced-header">
-        <span id="advancedToggle" class="section-toggle collapsed">&#9660;</span>
-        <span>Advanced Settings</span>
-      </div>
-    </div>
-
-    <div id="advancedSection" class="section-content collapsed">
-      <div class="sdpi-item">
-        <div class="sdpi-item-label">DDC Write Throttle</div>
-        <div class="slider-container">
-          <input
-            type="range"
-            class="sdpi-item-value"
-            id="ddcWriteThrottleMs"
-            min="10"
-            max="5000"
-            value="__DEFAULT_DDC_WRITE_THROTTLE_MS__"
-            step="10"
-          />
-          <span id="ddcWriteValue" class="slider-value">__DEFAULT_DDC_WRITE_THROTTLE_MS__ms</span>
-        </div>
-        <div class="sdpi-info">
-          Minimum time between DDC write commands (default: __DEFAULT_DDC_WRITE_THROTTLE_MS__ms).
-        </div>
-      </div>
-
-      <div class="sdpi-item">
-        <div class="sdpi-item-label">Enforcement Duration</div>
-        <div class="slider-container">
-          <input
-            type="range"
-            class="sdpi-item-value"
-            id="enforcementDurationMs"
-            min="1000"
-            max="30000"
-            value="__DEFAULT_ENFORCEMENT_DURATION_MS__"
-            step="500"
-          />
-          <span id="enforcementDurationValue" class="slider-value"
-            >__DEFAULT_ENFORCEMENT_DURATION_MS__ms</span
-          >
-        </div>
-        <div class="sdpi-info">
-          Duration to keep retrying brightness writes after user input (default:
-          __DEFAULT_ENFORCEMENT_DURATION_MS__ms).
-        </div>
-      </div>
-
-      <div class="sdpi-item">
-        <div class="sdpi-item-label">Enforcement Interval</div>
-        <div class="slider-container">
-          <input
-            type="range"
-            class="sdpi-item-value"
-            id="enforcementIntervalMs"
-            min="100"
-            max="5000"
-            value="__DEFAULT_ENFORCEMENT_INTERVAL_MS__"
-            step="100"
-          />
-          <span id="enforcementIntervalValue" class="slider-value"
-            >__DEFAULT_ENFORCEMENT_INTERVAL_MS__ms</span
-          >
-        </div>
-        <div class="sdpi-info">
-          Interval between retry attempts when enforcing brightness (default:
-          __DEFAULT_ENFORCEMENT_INTERVAL_MS__ms).
-        </div>
-      </div>
-
-      <div class="sdpi-item">
-        <div class="sdpi-item-label">Poll Interval</div>
-        <div class="slider-container">
-          <input
-            type="range"
-            class="sdpi-item-value"
-            id="pollIntervalMs"
-            min="10"
-            max="10000"
-            value="__DEFAULT_POLL_INTERVAL_MS__"
-            step="10"
-          />
-          <span id="pollValue" class="slider-value">__DEFAULT_POLL_INTERVAL_MS__ms</span>
-        </div>
-        <div class="sdpi-info">
-          Interval for polling monitor brightness (default: __DEFAULT_POLL_INTERVAL_MS__ms).
-        </div>
-      </div>
-    </div>
-
+    <div id="pi-container"></div>
     <script src="brightness-dial-pi.js"></script>
   </body>
 </html>

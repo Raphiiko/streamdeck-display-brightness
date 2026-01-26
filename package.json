@@ -11,6 +11,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@ddc-node/ddc-node-win32-x64-msvc": "^1.0.3",
     "@elgato/cli": "^1.7.0",
     "@rollup/plugin-commonjs": "^28.0.0",
     "@rollup/plugin-node-resolve": "^15.2.2",
@@ -29,8 +30,10 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@ddc-node/ddc-node": "^1.0.3",
     "@elgato/streamdeck": "^2.0.0",
+    "@raphiiko/ddc-node": "raphiiko/ddc-node",
+    "htm": "^3.1.1",
+    "preact": "^10.28.2",
     "rxjs": "^7.8.2"
   }
 }

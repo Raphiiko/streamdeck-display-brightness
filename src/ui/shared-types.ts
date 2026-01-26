@@ -18,9 +18,18 @@ export interface DialSettings {
   stepSize: number;
 }
 
+export type ConnectElgatoStreamDeckSocket = (
+  inPort: string,
+  inUUID: string,
+  inRegisterEvent: string,
+  inInfo: string,
+  inActionInfo: string
+) => void;
+
 declare global {
   interface Window {
     streamDeck?: StreamDeck;
+    connectElgatoStreamDeckSocket?: ConnectElgatoStreamDeckSocket;
   }
 }
 

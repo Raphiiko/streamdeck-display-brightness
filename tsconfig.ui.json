@@ -5,8 +5,10 @@
     "module": "ES2022",
     "moduleResolution": "Bundler",
     "noImplicitOverride": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
   },
-  "include": ["src/ui/**/*.ts"],
+  "include": ["src/ui/**/*.ts", "src/ui/**/*.tsx"],
   "exclude": ["node_modules"]
 }

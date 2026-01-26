@@ -72,8 +72,14 @@ export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSett
   ): Promise<void> {
     const payload = ev.payload as { event: string };
 
-    if (payload.event === 'getMonitors') {
+    if (payload.event === 'getMonitors' || payload.event === 'refreshMonitors') {
+      streamDeck.logger.info(`[ButtonAction] Received ${payload.event} request`);
       const monitors = this.monitorManager.getMonitors();
+      streamDeck.logger.info(`[ButtonAction] Cached monitors: ${monitors.length}`);
+
+      streamDeck.logger.info(
+        `[ButtonAction] Sending monitorList to PI with ${monitors.length} monitors`
+      );
       await streamDeck.ui.sendToPropertyInspector({
         event: 'monitorList',
         monitors: monitors.map((m) => ({
@@ -83,8 +89,7 @@ export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSett
           available: m.available,
         })),
       });
-    } else if (payload.event === 'refreshMonitors') {
-      await this.monitorManager.refreshMonitors();
+      streamDeck.logger.info('[ButtonAction] monitorList sent to PI');
     }
   }
 
@@ -132,7 +137,7 @@ export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSett
     settings: BrightnessButtonSettings,
     currentBrightness: number
   ): number {
-    const mode = settings.operationMode ?? 'increase';
+    const mode = settings.operationMode ?? 'cycle';
 
     switch (mode) {
       case 'increase': {

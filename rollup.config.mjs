@@ -10,38 +10,66 @@ function copyNativeModules(destDir) {
   return {
     name: 'copy-native-modules',
     writeBundle() {
-      const ddcNodeDir = path.join(destDir, 'node_modules', '@ddc-node');
+      const ddcNodeDir = path.join(destDir, 'node_modules', '@raphiiko');
 
       // Create directories if they don't exist
       fs.mkdirSync(ddcNodeDir, { recursive: true });
 
-      // Copy ddc-node and platform-specific bindings
-      const sourceDir = path.join('node_modules', '@ddc-node');
-      const items = fs.readdirSync(sourceDir);
+      // Copy ddc-node from the forked package
+      const sourceDir = path.join('node_modules', '@raphiiko', 'ddc-node');
+      const destPath = path.join(ddcNodeDir, 'ddc-node');
 
-      for (const item of items) {
-        const srcPath = path.join(sourceDir, item);
-        const destPath = path.join(ddcNodeDir, item);
+      try {
+        // Remove existing destination if it exists
+        if (fs.existsSync(destPath)) {
+          fs.rmSync(destPath, { recursive: true, force: true });
+        }
 
-        try {
-          // Remove existing destination if it exists
-          if (fs.existsSync(destPath)) {
-            fs.rmSync(destPath, { recursive: true, force: true });
+        // Copy directory recursively
+        fs.cpSync(sourceDir, destPath, { recursive: true });
+
+        // Copy the native .node file from the @ddc-node package (which has prebuilt binaries)
+        // The @raphiiko/ddc-node package looks for a local .node file first
+        const nativeNodeFile = path.join(
+          'node_modules',
+          '@ddc-node',
+          'ddc-node-win32-x64-msvc',
+          'ddc-node.win32-x64-msvc.node'
+        );
+        const nativeNodeDest = path.join(destPath, 'ddc-node.win32-x64-msvc.node');
+
+        if (fs.existsSync(nativeNodeFile)) {
+          fs.copyFileSync(nativeNodeFile, nativeNodeDest);
+          console.log(`Copied native .node file to ${nativeNodeDest}`);
+        } else {
+          // Try the dist folder location (might already be there from previous build)
+          const distNativeFile = path.join(
+            destDir,
+            'node_modules',
+            '@ddc-node',
+            'ddc-node-win32-x64-msvc',
+            'ddc-node.win32-x64-msvc.node'
+          );
+          if (fs.existsSync(distNativeFile)) {
+            fs.copyFileSync(distNativeFile, nativeNodeDest);
+            console.log(`Copied native .node file from dist to ${nativeNodeDest}`);
+          } else {
+            console.warn(
+              `WARNING: Native .node file not found at ${nativeNodeFile} or ${distNativeFile}. ` +
+                `Please run: npm install @ddc-node/ddc-node-win32-x64-msvc`
+            );
           }
-
-          // Copy directory recursively
-          fs.cpSync(srcPath, destPath, { recursive: true });
-        } catch (err) {
-          // If files are locked (e.g., by running plugin), skip
-          if (err.code === 'EPERM' || err.code === 'EBUSY') {
-            console.log(`Skipping locked files in ${item} (plugin may be running)`);
-            continue;
-          }
+        }
+      } catch (err) {
+        // If files are locked (e.g., by running plugin), skip
+        if (err.code === 'EPERM' || err.code === 'EBUSY') {
+          console.log(`Skipping locked files in ddc-node (plugin may be running)`);
+        } else {
           throw err;
         }
       }
 
-      console.log(`Copied @ddc-node native modules to ${ddcNodeDir}`);
+      console.log(`Copied @raphiiko/ddc-node native modules to ${ddcNodeDir}`);
     },
   };
 }
@@ -53,36 +81,14 @@ function copyUiAssets(sdPlugin) {
       const destDir = path.join(sdPlugin, 'ui');
       fs.mkdirSync(destDir, { recursive: true });
 
-      // Read globals.ts to extract default values
-      const globalsContent = fs.readFileSync('src/globals.ts', 'utf-8');
-      const extractDefault = (name) => {
-        const match = globalsContent.match(new RegExp(`export const ${name}\\s*=\\s*(\\d+)`));
-        return match ? match[1] : '0';
-      };
-      const DEFAULT_DDC_WRITE_THROTTLE_MS = extractDefault('DEFAULT_DDC_WRITE_THROTTLE_MS');
-      const DEFAULT_ENFORCEMENT_DURATION_MS = extractDefault('DEFAULT_ENFORCEMENT_DURATION_MS');
-      const DEFAULT_ENFORCEMENT_INTERVAL_MS = extractDefault('DEFAULT_ENFORCEMENT_INTERVAL_MS');
-      const DEFAULT_POLL_INTERVAL_MS = extractDefault('DEFAULT_POLL_INTERVAL_MS');
-
-      // Replace placeholders in HTML and copy
-      const replaceDefaults = (html) => {
-        return html
-          .replace(/__DEFAULT_DDC_WRITE_THROTTLE_MS__/g, DEFAULT_DDC_WRITE_THROTTLE_MS)
-          .replace(/__DEFAULT_ENFORCEMENT_DURATION_MS__/g, DEFAULT_ENFORCEMENT_DURATION_MS)
-          .replace(/__DEFAULT_ENFORCEMENT_INTERVAL_MS__/g, DEFAULT_ENFORCEMENT_INTERVAL_MS)
-          .replace(/__DEFAULT_POLL_INTERVAL_MS__/g, DEFAULT_POLL_INTERVAL_MS);
-      };
-
-      // Copy and process HTML
+      // Copy HTML files (no longer need string substitution, globals imported directly)
       const dialHtmlSrc = 'src/ui/brightness-dial-pi.html';
       const dialHtmlDest = path.join(destDir, 'brightness-dial-pi.html');
-      const dialHtmlContent = fs.readFileSync(dialHtmlSrc, 'utf-8');
-      fs.writeFileSync(dialHtmlDest, replaceDefaults(dialHtmlContent));
+      fs.copyFileSync(dialHtmlSrc, dialHtmlDest);
 
       const buttonHtmlSrc = 'src/ui/brightness-button-pi.html';
       const buttonHtmlDest = path.join(destDir, 'brightness-button-pi.html');
-      const buttonHtmlContent = fs.readFileSync(buttonHtmlSrc, 'utf-8');
-      fs.writeFileSync(buttonHtmlDest, replaceDefaults(buttonHtmlContent));
+      fs.copyFileSync(buttonHtmlSrc, buttonHtmlDest);
 
       // Copy component CSS
       const dialCssSrc = 'src/ui/brightness-dial-pi.css';
@@ -137,7 +143,7 @@ const configs = [
   // Main plugin
   {
     input: 'src/plugin.ts',
-    external: ['@ddc-node/ddc-node', '@ddc-node/ddc-node-*'],
+    external: ['@raphiiko/ddc-node'],
     output: {
       file: `${sdPlugin}/bin/plugin.js`,
       sourcemap: isWatching,
@@ -179,7 +185,7 @@ const configs = [
   },
   // UI property inspector for dial action
   {
-    input: 'src/ui/brightness-dial-pi.ts',
+    input: 'src/ui/brightness-dial-pi.tsx',
     output: {
       file: `${sdPlugin}/ui/brightness-dial-pi.js`,
       format: 'iife',
@@ -191,6 +197,7 @@ const configs = [
       }),
       nodeResolve({
         browser: true,
+        preferBuiltins: false,
       }),
       commonjs(),
       !isWatching && terser(),
@@ -199,7 +206,7 @@ const configs = [
   },
   // UI property inspector for button action
   {
-    input: 'src/ui/brightness-button-pi.ts',
+    input: 'src/ui/brightness-button-pi.tsx',
     output: {
       file: `${sdPlugin}/ui/brightness-button-pi.js`,
       format: 'iife',
@@ -211,6 +218,7 @@ const configs = [
       }),
       nodeResolve({
         browser: true,
+        preferBuiltins: false,
       }),
       commonjs(),
       !isWatching && terser(),

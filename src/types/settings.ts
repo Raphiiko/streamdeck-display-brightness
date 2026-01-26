@@ -35,15 +35,28 @@ export interface GlobalSettings {
   ddcWriteThrottleMs?: number;
   enforcementDurationMs?: number;
   enforcementIntervalMs?: number;
-  pollIntervalMs?: number;
+  brightnessPollIntervalMs?: number;
+  monitorPollIntervalMs?: number;
   // Index signature required by Stream Deck SDK's JsonObject constraint
   [key: string]: number | undefined;
 }
 
 export interface MonitorInfo {
+  /** Stable unique identifier (based on EDID/serial when available, fallback to index-based) */
   id: string;
+  /** Current runtime index from ddc-node (may change between reboots) */
+  runtimeIndex: number;
+  /** Display name for UI */
   name: string;
   brightness: number;
   maxBrightness: number;
   available: boolean;
+  /** Backend used to detect this monitor (winapi, nvapi, etc.) */
+  backend: string;
+  /** Serial number if available (most reliable identifier) */
+  serialNumber?: string;
+  /** Model name if available */
+  modelName?: string;
+  /** Manufacturer ID if available */
+  manufacturerId?: string;
 }

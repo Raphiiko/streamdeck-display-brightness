@@ -118,10 +118,18 @@ export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   override async onSendToPlugin(ev: SendToPluginEvent<any, BrightnessSettings>): Promise<void> {
     const payload = ev.payload as { event: string };
+    streamDeck.logger.info(`[DialAction] onSendToPlugin received: ${JSON.stringify(payload)}`);
 
     switch (payload.event) {
       case 'getMonitors':
+      case 'refreshMonitors': {
+        streamDeck.logger.info(`[DialAction] Received ${payload.event} request`);
         const monitors = this.monitorManager.getMonitors();
+        streamDeck.logger.info(`[DialAction] Cached monitors: ${monitors.length}`);
+
+        streamDeck.logger.info(
+          `[DialAction] Sending monitorList to PI with ${monitors.length} monitors`
+        );
         await streamDeck.ui.sendToPropertyInspector({
           event: 'monitorList',
           monitors: monitors.map((m) => ({
@@ -131,11 +139,9 @@ export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
             available: m.available,
           })),
         });
+        streamDeck.logger.info('[DialAction] monitorList sent to PI');
         break;
-
-      case 'refreshMonitors':
-        await this.monitorManager.refreshMonitors();
-        break;
+      }
     }
   }
 

@@ -19,7 +19,8 @@ function applyGlobalSettings(settings: GlobalSettings): void {
     enforcementIntervalMs: settings.enforcementIntervalMs,
   });
   monitorManager.configure({
-    pollIntervalMs: settings.pollIntervalMs,
+    brightnessPollIntervalMs: settings.brightnessPollIntervalMs,
+    monitorPollIntervalMs: settings.monitorPollIntervalMs,
   });
   streamDeck.logger.info(`Applied global settings: ${JSON.stringify(settings)}`);
 }
@@ -88,15 +89,28 @@ subscriptions.push(
   })
 );
 
+streamDeck.logger.info('[Plugin] Starting monitor manager initialization...');
 monitorManager
   .initialize()
   .then(() => {
-    streamDeck.logger.info('Monitor manager initialized');
-    monitorManager.startPolling();
+    const monitors = monitorManager.getMonitors();
+    streamDeck.logger.info(
+      `[Plugin] Monitor manager initialized successfully with ${monitors.length} monitors`
+    );
+    for (const m of monitors) {
+      streamDeck.logger.info(
+        `[Plugin] Monitor: id=${m.id}, name=${m.name}, brightness=${m.brightness}`
+      );
+    }
+    monitorManager.startBrightnessPolling();
+    // Start periodic refresh to detect monitors that initialize after boot
+    monitorManager.startMonitorPolling();
   })
   .catch((err) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    streamDeck.logger.error('Failed to initialize monitor manager', err);
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const errorStack = err instanceof Error ? err.stack : '';
+    streamDeck.logger.error(`[Plugin] Failed to initialize monitor manager: ${errorMsg}`);
+    streamDeck.logger.error(`[Plugin] Stack: ${errorStack}`);
   });
 
 streamDeck.actions.registerAction(new BrightnessDialAction());
