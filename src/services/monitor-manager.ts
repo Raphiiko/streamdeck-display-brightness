@@ -507,10 +507,11 @@ export class MonitorManager {
       this.displays = newDisplays;
       this.idToIndex = newIdToIndex;
 
-      // Remove monitors that are no longer present
-      for (const existingId of this.monitors.keys()) {
+      // Mark monitors that are no longer present as unavailable, but keep them in the cache
+      // so actions that target them can still show them in the UI and users can unselect them.
+      for (const [existingId, cached] of this.monitors.entries()) {
         if (!newDisplays.has(existingId)) {
-          this.monitors.delete(existingId);
+          cached.available = false;
         }
       }
 
@@ -520,9 +521,9 @@ export class MonitorManager {
 
       // Always emit the monitors changed event, even if empty
       streamDeck.logger.info(
-        `[MonitorManager] Emitting monitorsChanged$ with ${newMonitors.length} monitors`
+        `[MonitorManager] Emitting monitorsChanged$ with ${this.monitors.size} cached monitor(s)`
       );
-      this.monitorsChanged$.next(newMonitors);
+      this.monitorsChanged$.next(this.getMonitors());
 
       return newMonitors;
     } catch (err) {

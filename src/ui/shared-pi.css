@@ -31,6 +31,21 @@
   margin: 0;
 }
 
+.monitor-item--undetected .monitor-name {
+  color: #888;
+}
+
+.monitor-status-icon {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  color: #888;
+}
+
+.monitor-item--undetected:hover .monitor-status-icon {
+  color: #aaa;
+}
+
 .no-monitors {
   padding: 16px;
   text-align: center;
