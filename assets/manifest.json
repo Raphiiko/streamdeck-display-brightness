@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Display Brightness Control",
-  "Version": "1.0.2.0",
+  "Version": "1.0.1.0",
   "Author": "Raphiiko",
   "Description": "Control the brightness of external displays via DDC/CI",
   "Icon": "imgs/plugin/marketplace",
