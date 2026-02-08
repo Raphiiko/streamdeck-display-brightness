@@ -1,4 +1,5 @@
 {
+  "version": "1.0.3",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart co.raphii.streamdeck-display-brightness\"",
@@ -7,7 +8,8 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.ui.json",
-    "prepare": "husky"
+    "prepare": "husky",
+    "set-version": "node scripts/set-version.js"
   },
   "type": "module",
   "devDependencies": {

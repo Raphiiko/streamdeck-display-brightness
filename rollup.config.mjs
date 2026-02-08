@@ -71,7 +71,7 @@ function copyNativeModules(destDir) {
 
       console.log(`Copied @raphiiko/ddc-node native modules to ${ddcNodeDir}`);
 
-      // Copy koffi native module
+      // Copy koffi native module (only essential files for Windows)
       const koffiSrc = path.join('node_modules', 'koffi');
       const koffiDest = path.join(destDir, 'node_modules', 'koffi');
 
@@ -79,8 +79,26 @@ function copyNativeModules(destDir) {
         if (fs.existsSync(koffiDest)) {
           fs.rmSync(koffiDest, { recursive: true, force: true });
         }
-        fs.cpSync(koffiSrc, koffiDest, { recursive: true });
-        console.log(`Copied koffi to ${koffiDest}`);
+
+        // Create koffi directory structure
+        fs.mkdirSync(koffiDest, { recursive: true });
+        const koffiBuildDest = path.join(koffiDest, 'build', 'koffi', 'win32_x64');
+        fs.mkdirSync(koffiBuildDest, { recursive: true });
+
+        // Copy only essential files
+        const essentialFiles = ['index.js', 'indirect.js', 'index.d.ts', 'package.json'];
+
+        for (const file of essentialFiles) {
+          fs.copyFileSync(path.join(koffiSrc, file), path.join(koffiDest, file));
+        }
+
+        // Copy only Windows x64 native module
+        fs.copyFileSync(
+          path.join(koffiSrc, 'build', 'koffi', 'win32_x64', 'koffi.node'),
+          path.join(koffiBuildDest, 'koffi.node')
+        );
+
+        console.log(`Copied koffi essentials to ${koffiDest}`);
       } catch (err) {
         if (err.code === 'EPERM' || err.code === 'EBUSY') {
           console.log(`Skipping locked files in koffi (plugin may be running)`);
