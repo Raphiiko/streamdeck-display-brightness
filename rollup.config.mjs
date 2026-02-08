@@ -70,6 +70,24 @@ function copyNativeModules(destDir) {
       }
 
       console.log(`Copied @raphiiko/ddc-node native modules to ${ddcNodeDir}`);
+
+      // Copy koffi native module
+      const koffiSrc = path.join('node_modules', 'koffi');
+      const koffiDest = path.join(destDir, 'node_modules', 'koffi');
+
+      try {
+        if (fs.existsSync(koffiDest)) {
+          fs.rmSync(koffiDest, { recursive: true, force: true });
+        }
+        fs.cpSync(koffiSrc, koffiDest, { recursive: true });
+        console.log(`Copied koffi to ${koffiDest}`);
+      } catch (err) {
+        if (err.code === 'EPERM' || err.code === 'EBUSY') {
+          console.log(`Skipping locked files in koffi (plugin may be running)`);
+        } else {
+          throw err;
+        }
+      }
     },
   };
 }
@@ -143,7 +161,7 @@ const configs = [
   // Main plugin
   {
     input: 'src/plugin.ts',
-    external: ['@raphiiko/ddc-node'],
+    external: ['@raphiiko/ddc-node', 'koffi'],
     output: {
       file: `${sdPlugin}/bin/plugin.js`,
       sourcemap: isWatching,
