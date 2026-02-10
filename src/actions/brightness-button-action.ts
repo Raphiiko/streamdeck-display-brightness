@@ -87,9 +87,24 @@ export class BrightnessButtonAction extends SingletonAction<BrightnessButtonSett
           name: m.name,
           brightness: m.brightness,
           available: m.available,
+          backend: m.backend,
+          runtimeIndex: m.runtimeIndex,
+          serialNumber: m.serialNumber,
+          modelName: m.modelName,
+          manufacturerId: m.manufacturerId,
         })),
       });
       streamDeck.logger.info('[ButtonAction] monitorList sent to PI');
+      return;
+    }
+
+    if (payload.event === 'exportMonitorDebugInfo') {
+      streamDeck.logger.info('[ButtonAction] Preparing monitor debug export payload');
+      await streamDeck.ui.sendToPropertyInspector({
+        event: 'monitorDebugInfo',
+        debugText: this.monitorManager.getDebugInfoText(),
+      });
+      streamDeck.logger.info('[ButtonAction] monitorDebugInfo sent to PI');
     }
   }
 

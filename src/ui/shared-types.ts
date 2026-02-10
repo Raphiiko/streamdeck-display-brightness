@@ -38,4 +38,9 @@ export interface Monitor {
   name: string;
   brightness: number;
   available: boolean;
+  backend?: string;
+  runtimeIndex?: number;
+  serialNumber?: string;
+  modelName?: string;
+  manufacturerId?: string;
 }

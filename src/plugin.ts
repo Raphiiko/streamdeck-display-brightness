@@ -77,6 +77,11 @@ subscriptions.push(
         name: m.name,
         brightness: m.brightness,
         available: m.available,
+        backend: m.backend,
+        runtimeIndex: m.runtimeIndex,
+        serialNumber: m.serialNumber,
+        modelName: m.modelName,
+        manufacturerId: m.manufacturerId,
       })),
     });
   })

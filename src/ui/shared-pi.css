@@ -13,9 +13,22 @@
 .monitor-item {
   padding: 8px 12px;
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.monitor-item-header {
+  display: flex;
   align-items: center;
   gap: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.monitor-item-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
 }
 
 .monitor-item:last-child {
@@ -31,6 +44,17 @@
   margin: 0;
 }
 
+.monitor-backend {
+  margin-left: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 6px;
+  text-transform: lowercase;
+  color: #bfc7cf;
+}
+
 .monitor-item--undetected .monitor-name {
   color: #888;
 }
@@ -40,6 +64,145 @@
   display: inline-flex;
   align-items: center;
   color: #888;
+}
+
+.monitor-row-debug-toggle {
+  border: 1px solid #4d5660;
+  background: #2d3339;
+  color: #d2d8de;
+  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 10px;
+  line-height: 1.2;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.monitor-row-debug-toggle-caret {
+  transition: transform 0.2s ease;
+}
+
+.monitor-row-debug-toggle--open .monitor-row-debug-toggle-caret {
+  transform: rotate(180deg);
+}
+
+.monitor-debug-panel {
+  border-top: 1px dashed rgba(255, 255, 255, 0.12);
+  padding-top: 6px;
+}
+
+.monitor-debug-grid {
+  margin: 8px 0 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  row-gap: 4px;
+  column-gap: 8px;
+  font-size: 11px;
+}
+
+.monitor-debug-grid dt {
+  color: #7f8790;
+}
+
+.monitor-debug-grid dd {
+  margin: 0;
+  color: #d3dae1;
+  word-break: break-all;
+}
+
+.monitor-debug-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.monitor-debug-export-button {
+  border: 1px solid #4d5660;
+  background: #2d3339;
+  color: #e5ebf2;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.monitor-debug-export-button:hover {
+  background: #39424a;
+}
+
+.monitor-debug-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 14, 18, 0.74);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 12px;
+}
+
+.monitor-debug-modal {
+  width: min(680px, 100%);
+  background: #1f252b;
+  border: 1px solid #49525c;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.monitor-debug-modal-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.monitor-debug-textarea {
+  width: 100%;
+  min-height: 220px;
+  max-height: 360px;
+  resize: vertical;
+  border: 1px solid #505a65;
+  border-radius: 4px;
+  background: #11161b;
+  color: #d9e0e7;
+  padding: 8px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.monitor-debug-modal-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.monitor-debug-modal-button {
+  border: 1px solid #4d5660;
+  background: #2d3339;
+  color: #e5ebf2;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.monitor-debug-modal-button--primary {
+  background: #385d7a;
+  border-color: #5a87aa;
+}
+
+.monitor-debug-modal-button:hover {
+  background: #39424a;
+}
+
+.monitor-debug-modal-button--primary:hover {
+  background: #447094;
 }
 
 .monitor-item--undetected:hover .monitor-status-icon {

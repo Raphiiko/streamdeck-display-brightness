@@ -137,9 +137,23 @@ export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
             name: m.name,
             brightness: m.brightness,
             available: m.available,
+            backend: m.backend,
+            runtimeIndex: m.runtimeIndex,
+            serialNumber: m.serialNumber,
+            modelName: m.modelName,
+            manufacturerId: m.manufacturerId,
           })),
         });
         streamDeck.logger.info('[DialAction] monitorList sent to PI');
+        break;
+      }
+      case 'exportMonitorDebugInfo': {
+        streamDeck.logger.info('[DialAction] Preparing monitor debug export payload');
+        await streamDeck.ui.sendToPropertyInspector({
+          event: 'monitorDebugInfo',
+          debugText: this.monitorManager.getDebugInfoText(),
+        });
+        streamDeck.logger.info('[DialAction] monitorDebugInfo sent to PI');
         break;
       }
     }

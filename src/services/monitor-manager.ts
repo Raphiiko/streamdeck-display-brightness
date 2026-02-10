@@ -31,11 +31,48 @@ interface ResolvedMonitor {
   manufacturerId?: string;
 }
 
+interface TestMonitorResult {
+  info: MonitorInfo | null;
+  errorMessage?: string;
+}
+
+interface MonitorDebugEntry {
+  stableId: string;
+  runtimeIndex: number;
+  backend: string;
+  name: string;
+  displayId: string;
+  available: boolean;
+  brightness: number;
+  maxBrightness: number;
+  hasEdid: boolean;
+  manufacturerId?: string;
+  modelId?: number;
+  modelName?: string;
+  serialNumber?: string;
+  serial?: number;
+  manufactureWeek?: number;
+  manufactureYear?: number;
+  errorMessage?: string;
+}
+
+interface MonitorDebugSnapshot {
+  generatedAtIso: string;
+  physicalMapping: PhysicalMonitorEntry[];
+  registryEntries: RegistryMonitorEntry[];
+  resolvedBeforeTest: MonitorDebugEntry[];
+  testedMonitors: MonitorDebugEntry[];
+  dedupedMonitors: MonitorDebugEntry[];
+  keptUnavailableIds: string[];
+}
+
 export class MonitorManager {
   private static instance: MonitorManager;
 
   private monitors: ResolvedMonitor[] = [];
   private monitorInfoCache: MonitorInfo[] = [];
+  private lastDebugSnapshot: MonitorDebugSnapshot | null = null;
+  private recentErrors: Array<{ timestampIso: string; monitorId?: string; message: string }> = [];
 
   private brightnessPollIntervalMs = DEFAULT_BRIGHTNESS_POLL_INTERVAL_MS;
   private monitorPollIntervalMs = DEFAULT_MONITOR_POLL_INTERVAL_MS;
@@ -99,6 +136,96 @@ export class MonitorManager {
     return this.monitorInfoCache;
   }
 
+  getDebugInfoText(): string {
+    const nowIso = new Date().toISOString();
+    const snapshot = this.lastDebugSnapshot;
+    const lines: string[] = [];
+
+    lines.push('sd-brightness monitor debug report');
+    lines.push(`generatedAt: ${nowIso}`);
+    lines.push(`knownMonitors: ${this.monitorInfoCache.length}`);
+    lines.push('');
+
+    lines.push('Known monitors (current cache)');
+    if (this.monitorInfoCache.length === 0) {
+      lines.push('- none');
+    } else {
+      for (const monitor of this.monitorInfoCache) {
+        lines.push(
+          `- id=${monitor.id} | name=${monitor.name} | backend=${monitor.backend} | runtimeIndex=${monitor.runtimeIndex} | available=${monitor.available} | brightness=${monitor.brightness}/${monitor.maxBrightness}`
+        );
+        lines.push(
+          `  manufacturerId=${monitor.manufacturerId ?? '-'} | modelName=${monitor.modelName ?? '-'} | serialNumber=${monitor.serialNumber ?? '-'}`
+        );
+      }
+    }
+    lines.push('');
+
+    if (snapshot) {
+      lines.push(`Snapshot captured at: ${snapshot.generatedAtIso}`);
+      lines.push('');
+
+      lines.push(`WinAPI physical mapping (${snapshot.physicalMapping.length})`);
+      if (snapshot.physicalMapping.length === 0) {
+        lines.push('- none');
+      } else {
+        for (const entry of snapshot.physicalMapping) {
+          lines.push(
+            `- globalIndex=${entry.globalIndex} | modelCode=${entry.modelCode} | instancePath=${entry.instancePath}`
+          );
+        }
+      }
+      lines.push('');
+
+      lines.push(`Registry entries (${snapshot.registryEntries.length})`);
+      if (snapshot.registryEntries.length === 0) {
+        lines.push('- none');
+      } else {
+        for (const entry of snapshot.registryEntries) {
+          lines.push(
+            `- modelCode=${entry.modelCode} | instanceName=${entry.instanceName} | friendlyName=${entry.friendlyName || '-'} | serialNumber=${entry.serialNumber || '-'}`
+          );
+        }
+      }
+      lines.push('');
+
+      this.appendDebugEntries(
+        lines,
+        'Resolved before brightness test',
+        snapshot.resolvedBeforeTest
+      );
+      this.appendDebugEntries(
+        lines,
+        'DDC luminance check passed (can read VCP 0x10)',
+        snapshot.testedMonitors
+      );
+      this.appendDebugEntries(lines, 'Deduped active entries', snapshot.dedupedMonitors);
+
+      lines.push(`Kept unavailable IDs (${snapshot.keptUnavailableIds.length})`);
+      if (snapshot.keptUnavailableIds.length === 0) {
+        lines.push('- none');
+      } else {
+        for (const id of snapshot.keptUnavailableIds) {
+          lines.push(`- ${id}`);
+        }
+      }
+      lines.push('');
+    }
+
+    lines.push(`Recent errors (${this.recentErrors.length})`);
+    if (this.recentErrors.length === 0) {
+      lines.push('- none');
+    } else {
+      for (const entry of this.recentErrors) {
+        lines.push(
+          `- ${entry.timestampIso}${entry.monitorId ? ` | monitorId=${entry.monitorId}` : ''} | ${entry.message}`
+        );
+      }
+    }
+
+    return lines.join('\n');
+  }
+
   startBrightnessPolling(): void {
     if (this.brightnessPollTimer) return;
     this.brightnessPollTimer = setInterval(() => {
@@ -137,11 +264,11 @@ export class MonitorManager {
       monitor.display
         .setVcpFeature(VCPFeatureCode.ImageAdjustment.Luminance, rawValue)
         .catch((err: Error) => {
-          this.errorSubject.next({ error: err, monitorId });
+          this.emitError(err, monitorId);
         })
     ).pipe(
       catchError((err: Error) => {
-        this.errorSubject.next({ error: err, monitorId });
+        this.emitError(err, monitorId);
         return EMPTY;
       })
     );
@@ -168,16 +295,21 @@ export class MonitorManager {
    */
   private async refreshMonitors(): Promise<void> {
     try {
-      const resolved = await this.enumerateAll();
+      const { resolved, physicalMapping, registryInfo } = await this.enumerateAll();
+      const resolvedDebugEntries = resolved.map((monitor) =>
+        this.toDebugEntry(monitor, null, undefined)
+      );
 
       // Test each monitor for brightness support BEFORE deduplication.
       // This is critical because a monitor might appear in both WinAPI and NVAPI,
       // and only one backend may actually be able to communicate with it.
       const tested: { monitor: ResolvedMonitor; info: MonitorInfo }[] = [];
+      const testedDebugEntries: MonitorDebugEntry[] = [];
       for (const monitor of resolved) {
-        const info = await this.testMonitor(monitor);
-        if (info) {
-          tested.push({ monitor, info });
+        const result = await this.testMonitor(monitor);
+        testedDebugEntries.push(this.toDebugEntry(monitor, result.info, result.errorMessage));
+        if (result.info) {
+          tested.push({ monitor, info: result.info });
         }
       }
 
@@ -199,10 +331,12 @@ export class MonitorManager {
       // Merge with previously-known monitors. If a monitor we've seen before
       // is not in this enumeration, keep it but mark it unavailable. This
       // avoids dropping monitors from the UI due to transient DDC/CI failures.
+      const keptUnavailableIds: string[] = [];
       for (const prev of this.monitors) {
         if (!deduped.has(prev.id)) {
           const cachedInfo = this.monitorInfoCache.find((m) => m.id === prev.id);
           if (cachedInfo) {
+            keptUnavailableIds.push(prev.id);
             deduped.set(prev.id, {
               monitor: prev,
               info: { ...cachedInfo, available: false, brightness: 0 },
@@ -214,6 +348,19 @@ export class MonitorManager {
       const entries = [...deduped.values()];
       const monitors = entries.map((e) => e.monitor);
       const monitorInfos = entries.map((e) => e.info);
+      const dedupedDebugEntries = entries.map((entry) =>
+        this.toDebugEntry(entry.monitor, entry.info, undefined)
+      );
+
+      this.lastDebugSnapshot = {
+        generatedAtIso: new Date().toISOString(),
+        physicalMapping,
+        registryEntries: [...registryInfo.values()],
+        resolvedBeforeTest: resolvedDebugEntries,
+        testedMonitors: testedDebugEntries,
+        dedupedMonitors: dedupedDebugEntries,
+        keptUnavailableIds,
+      };
 
       const changed = this.hasMonitorListChanged(monitorInfos);
 
@@ -224,9 +371,7 @@ export class MonitorManager {
         this.monitorsChangedSubject.next([...monitorInfos]);
       }
     } catch (err) {
-      this.errorSubject.next({
-        error: err instanceof Error ? err : new Error(String(err)),
-      });
+      this.emitError(err instanceof Error ? err : new Error(String(err)));
     }
   }
 
@@ -235,13 +380,23 @@ export class MonitorManager {
    * Does NOT deduplicate - returns all monitors including duplicates so that
    * brightness testing can determine which backend actually works.
    */
-  private async enumerateAll(): Promise<ResolvedMonitor[]> {
+  private async enumerateAll(): Promise<{
+    resolved: ResolvedMonitor[];
+    physicalMapping: PhysicalMonitorEntry[];
+    registryInfo: Map<string, RegistryMonitorEntry>;
+  }> {
     const dm = new DisplayManager();
     const displays = await dm.collect();
 
     const { physicalMapping, registryInfo } = this.getWinApiEnrichmentData();
 
-    return displays.map((display) => this.resolveDisplay(display, physicalMapping, registryInfo));
+    return {
+      resolved: displays.map((display) =>
+        this.resolveDisplay(display, physicalMapping, registryInfo)
+      ),
+      physicalMapping,
+      registryInfo,
+    };
   }
 
   /**
@@ -258,11 +413,11 @@ export class MonitorManager {
         registryInfo: getRegistryMonitorInfo(),
       };
     } catch (err) {
-      this.errorSubject.next({
-        error: new Error(
+      this.emitError(
+        new Error(
           `Monitor enumeration failed, WinAPI monitors will have unstable IDs: ${err instanceof Error ? err.message : String(err)}`
-        ),
-      });
+        )
+      );
       return { physicalMapping: [], registryInfo: new Map() };
     }
   }
@@ -391,27 +546,30 @@ export class MonitorManager {
    * Test a monitor for DDC/CI brightness support.
    * Returns MonitorInfo if the monitor supports brightness, null otherwise.
    */
-  private async testMonitor(monitor: ResolvedMonitor): Promise<MonitorInfo | null> {
+  private async testMonitor(monitor: ResolvedMonitor): Promise<TestMonitorResult> {
     try {
       const feature = await monitor.display.getVcpFeature(VCPFeatureCode.ImageAdjustment.Luminance);
       if (feature.type === VcpValueType.Continuous) {
         return {
-          id: monitor.id,
-          runtimeIndex: monitor.display.index,
-          name: monitor.name,
-          brightness: feature.currentValue,
-          maxBrightness: feature.maximumValue,
-          available: true,
-          backend: monitor.backend,
-          serialNumber: monitor.serialNumber,
-          modelName: monitor.modelName,
-          manufacturerId: monitor.manufacturerId,
+          info: {
+            id: monitor.id,
+            runtimeIndex: monitor.display.index,
+            name: monitor.name,
+            brightness: feature.currentValue,
+            maxBrightness: feature.maximumValue,
+            available: true,
+            backend: monitor.backend,
+            serialNumber: monitor.serialNumber,
+            modelName: monitor.modelName,
+            manufacturerId: monitor.manufacturerId,
+          },
         };
       }
     } catch {
       // Monitor doesn't support brightness or DDC/CI communication failed
+      return { info: null, errorMessage: 'DDC read failed or unsupported luminance feature' };
     }
-    return null;
+    return { info: null, errorMessage: 'Luminance VCP feature is not continuous' };
   }
 
   /**
@@ -438,10 +596,7 @@ export class MonitorManager {
           }
         }
       } catch (err) {
-        this.errorSubject.next({
-          error: err instanceof Error ? err : new Error(String(err)),
-          monitorId: monitor.id,
-        });
+        this.emitError(err instanceof Error ? err : new Error(String(err)), monitor.id);
         if (cached) {
           cached.available = false;
         }
@@ -457,5 +612,65 @@ export class MonitorManager {
 
     const cachedIds = new Set(this.monitorInfoCache.map((m) => m.id));
     return newInfos.some((m) => !cachedIds.has(m.id));
+  }
+
+  private toDebugEntry(
+    monitor: ResolvedMonitor,
+    info: MonitorInfo | null,
+    errorMessage?: string
+  ): MonitorDebugEntry {
+    return {
+      stableId: monitor.id,
+      runtimeIndex: monitor.display.index,
+      backend: monitor.backend,
+      name: monitor.name,
+      displayId: monitor.display.displayId,
+      available: info?.available ?? false,
+      brightness: info?.brightness ?? 0,
+      maxBrightness: info?.maxBrightness ?? 0,
+      hasEdid: !!monitor.display.edidData?.length,
+      manufacturerId: monitor.display.manufacturerId || monitor.manufacturerId,
+      modelId: monitor.display.modelId,
+      modelName: monitor.display.modelName || monitor.modelName,
+      serialNumber: monitor.display.serialNumber || monitor.serialNumber,
+      serial: monitor.display.serial,
+      manufactureWeek: monitor.display.manufactureWeek,
+      manufactureYear: monitor.display.manufactureYear,
+      errorMessage,
+    };
+  }
+
+  private appendDebugEntries(lines: string[], title: string, entries: MonitorDebugEntry[]): void {
+    lines.push(`${title} (${entries.length})`);
+    if (entries.length === 0) {
+      lines.push('- none');
+      lines.push('');
+      return;
+    }
+
+    for (const entry of entries) {
+      lines.push(
+        `- stableId=${entry.stableId} | name=${entry.name} | backend=${entry.backend} | runtimeIndex=${entry.runtimeIndex} | available=${entry.available} | brightness=${entry.brightness}/${entry.maxBrightness}`
+      );
+      lines.push(
+        `  displayId=${entry.displayId} | hasEdid=${entry.hasEdid} | manufacturerId=${entry.manufacturerId ?? '-'} | modelId=${entry.modelId ?? '-'} | modelName=${entry.modelName ?? '-'} | serialNumber=${entry.serialNumber ?? '-'} | serial=${entry.serial ?? '-'} | manufactureWeek=${entry.manufactureWeek ?? '-'} | manufactureYear=${entry.manufactureYear ?? '-'}`
+      );
+      if (entry.errorMessage) {
+        lines.push(`  error=${entry.errorMessage}`);
+      }
+    }
+    lines.push('');
+  }
+
+  private emitError(error: Error, monitorId?: string): void {
+    this.errorSubject.next({ error, monitorId });
+    this.recentErrors.push({
+      timestampIso: new Date().toISOString(),
+      monitorId,
+      message: error.message,
+    });
+    if (this.recentErrors.length > 50) {
+      this.recentErrors.splice(0, this.recentErrors.length - 50);
+    }
   }
 }
