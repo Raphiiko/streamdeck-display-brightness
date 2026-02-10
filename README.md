@@ -27,7 +27,7 @@ Control the brightness and contrast of your displays directly from your Stream D
 
 ## Actions
 
-### Display Brightness Control (Dial)
+### Display Brightness/Contrast Control (Dial)
 
 For devices like the Stream Deck+ with built-in dials. Rotate to adjust the active mode, then press the dial to switch between brightness and contrast.
 
@@ -70,14 +70,36 @@ Works with any Stream Deck model. Choose from multiple modes to control your bri
 
 Control individual displays or all monitors at once.
 
+</td>
+<td width="50%">
+
+![Button Settings](docs/button_brightness_settings.png)
+
+</td>
+</tr>
+</table>
+
 ### Display Contrast Control (Button)
 
 Works exactly like the brightness button action, but applies the selected mode to monitor contrast instead.
 
+<table>
+<tr>
+<td width="50%">
+
+**Available Modes:**
+
+- **Cycle Through Values**: Press to cycle through preset contrast levels (e.g., 0%, 25%, 50%, 75%, 100%)
+- **Set to Value**: Set contrast to a specific percentage when pressed
+- **Toggle**: Toggle between two configurable contrast values
+- **Increase/Decrease**: Increment or decrement contrast by a fixed step
+
+Control individual displays or all monitors at once.
+
 </td>
 <td width="50%">
 
-![Button Settings](docs/button_settings.png)
+![Contrast Button Settings](docs/button_contrast_settings.png)
 
 </td>
 </tr>
