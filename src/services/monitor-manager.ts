@@ -69,10 +69,13 @@ interface MonitorDebugSnapshot {
 export class MonitorManager {
   private static instance: MonitorManager;
 
+  private static readonly AVAILABILITY_FAILURE_THRESHOLD = 3;
+
   private monitors: ResolvedMonitor[] = [];
   private monitorInfoCache: MonitorInfo[] = [];
   private lastDebugSnapshot: MonitorDebugSnapshot | null = null;
   private recentErrors: Array<{ timestampIso: string; monitorId?: string; message: string }> = [];
+  private consecutiveReadFailures = new Map<string, number>();
 
   private brightnessPollIntervalMs = DEFAULT_BRIGHTNESS_POLL_INTERVAL_MS;
   private monitorPollIntervalMs = DEFAULT_MONITOR_POLL_INTERVAL_MS;
@@ -305,11 +308,39 @@ export class MonitorManager {
       // and only one backend may actually be able to communicate with it.
       const tested: { monitor: ResolvedMonitor; info: MonitorInfo }[] = [];
       const testedDebugEntries: MonitorDebugEntry[] = [];
+      const successfulIds = new Set<string>();
+      const failedIds = new Set<string>();
+      const failedMonitorsById = new Map<string, ResolvedMonitor>();
+
       for (const monitor of resolved) {
         const result = await this.testMonitor(monitor);
         testedDebugEntries.push(this.toDebugEntry(monitor, result.info, result.errorMessage));
+
         if (result.info) {
           tested.push({ monitor, info: result.info });
+          successfulIds.add(monitor.id);
+          continue;
+        }
+
+        failedIds.add(monitor.id);
+        const existingFailed = failedMonitorsById.get(monitor.id);
+        if (!existingFailed) {
+          failedMonitorsById.set(monitor.id, monitor);
+          continue;
+        }
+
+        if (monitor.display.edidData?.length && !existingFailed.display.edidData?.length) {
+          failedMonitorsById.set(monitor.id, monitor);
+        }
+      }
+
+      for (const id of successfulIds) {
+        this.registerReadSuccess(id);
+      }
+
+      for (const id of failedIds) {
+        if (!successfulIds.has(id)) {
+          this.registerReadFailure(id);
         }
       }
 
@@ -328,18 +359,65 @@ export class MonitorManager {
         }
       }
 
+      // Keep currently-detected monitors visible even when their DDC check fails.
+      // This helps users understand unstable enumeration instead of seeing monitors
+      // disappear from the list.
+      for (const [id, monitor] of failedMonitorsById) {
+        if (deduped.has(id)) continue;
+
+        const cachedInfo = this.monitorInfoCache.find((m) => m.id === id);
+        const unavailable = this.hasReachedFailureThreshold(id);
+
+        deduped.set(id, {
+          monitor,
+          info: cachedInfo
+            ? {
+                ...cachedInfo,
+                runtimeIndex: monitor.display.index,
+                backend: monitor.backend,
+                serialNumber: monitor.serialNumber,
+                modelName: monitor.modelName,
+                manufacturerId: monitor.manufacturerId,
+                available: unavailable ? false : cachedInfo.available,
+                brightness: unavailable ? 0 : cachedInfo.brightness,
+              }
+            : {
+                id,
+                runtimeIndex: monitor.display.index,
+                name: monitor.name,
+                brightness: 0,
+                maxBrightness: 100,
+                available: false,
+                backend: monitor.backend,
+                serialNumber: monitor.serialNumber,
+                modelName: monitor.modelName,
+                manufacturerId: monitor.manufacturerId,
+              },
+        });
+      }
+
       // Merge with previously-known monitors. If a monitor we've seen before
       // is not in this enumeration, keep it but mark it unavailable. This
       // avoids dropping monitors from the UI due to transient DDC/CI failures.
       const keptUnavailableIds: string[] = [];
+      const resolvedIds = new Set(resolved.map((m) => m.id));
       for (const prev of this.monitors) {
+        if (!resolvedIds.has(prev.id)) {
+          this.registerReadFailure(prev.id);
+        }
+
         if (!deduped.has(prev.id)) {
           const cachedInfo = this.monitorInfoCache.find((m) => m.id === prev.id);
           if (cachedInfo) {
+            const unavailable = this.hasReachedFailureThreshold(prev.id);
             keptUnavailableIds.push(prev.id);
             deduped.set(prev.id, {
               monitor: prev,
-              info: { ...cachedInfo, available: false, brightness: 0 },
+              info: {
+                ...cachedInfo,
+                available: unavailable ? false : cachedInfo.available,
+                brightness: unavailable ? 0 : cachedInfo.brightness,
+              },
             });
           }
         }
@@ -440,7 +518,7 @@ export class MonitorManager {
 
     // NVAPI and other backends with EDID data: use EDID-derived identification
     if (hasEdid) {
-      return this.resolveFromEdid(display);
+      return this.resolveFromEdid(display, physicalMapping);
     }
 
     // Fallback: use whatever ddc-node provides
@@ -450,8 +528,11 @@ export class MonitorManager {
   /**
    * Resolve a display that has EDID data (typically NVAPI).
    */
-  private resolveFromEdid(display: Display): ResolvedMonitor {
-    const id = this.generateStableIdFromEdid(display);
+  private resolveFromEdid(
+    display: Display,
+    physicalMapping: PhysicalMonitorEntry[]
+  ): ResolvedMonitor {
+    const id = this.generateStableIdFromEdid(display, physicalMapping);
     const name = display.modelName || `Display (${display.backend})`;
 
     return {
@@ -521,13 +602,29 @@ export class MonitorManager {
    * Registry uses modelCode (e.g. "GSM774D") + serial. NVAPI gives us
    * manufacturerId (e.g. "GSM"), modelId (e.g. 30541 = 0x774D), and serialNumber.
    */
-  private generateStableIdFromEdid(display: Display): string {
+  private generateStableIdFromEdid(
+    display: Display,
+    physicalMapping: PhysicalMonitorEntry[]
+  ): string {
     if (display.manufacturerId && display.modelId !== undefined) {
       const modelCode =
         display.manufacturerId + display.modelId.toString(16).toUpperCase().padStart(4, '0');
-      const serial = display.serialNumber || display.serial;
-      if (serial) {
-        return `${modelCode}:${serial}`;
+
+      const serialNumber = display.serialNumber?.trim();
+      if (serialNumber) {
+        return `${modelCode}:${serialNumber}`;
+      }
+
+      const connectedInstancePath = this.resolveConnectedInstancePathForModelCode(
+        modelCode,
+        physicalMapping
+      );
+      if (connectedInstancePath) {
+        return `${modelCode}:${connectedInstancePath}`;
+      }
+
+      if (display.serial !== undefined) {
+        return `${modelCode}:${display.serial}`;
       }
     }
 
@@ -584,6 +681,7 @@ export class MonitorManager {
           VCPFeatureCode.ImageAdjustment.Luminance
         );
         if (feature.type === VcpValueType.Continuous) {
+          this.registerReadSuccess(monitor.id);
           this.pollResultSubject.next({
             monitorId: monitor.id,
             brightness: feature.currentValue,
@@ -596,12 +694,32 @@ export class MonitorManager {
           }
         }
       } catch (err) {
+        const failures = this.registerReadFailure(monitor.id);
         this.emitError(err instanceof Error ? err : new Error(String(err)), monitor.id);
         if (cached) {
-          cached.available = false;
+          if (failures >= MonitorManager.AVAILABILITY_FAILURE_THRESHOLD) {
+            cached.available = false;
+          }
         }
       }
     }
+  }
+
+  private resolveConnectedInstancePathForModelCode(
+    modelCode: string,
+    physicalMapping: PhysicalMonitorEntry[]
+  ): string | null {
+    const instancePaths = new Set(
+      physicalMapping
+        .filter((entry) => entry.modelCode === modelCode)
+        .map((entry) => entry.instancePath)
+    );
+
+    if (instancePaths.size === 1) {
+      return [...instancePaths][0];
+    }
+
+    return null;
   }
 
   /**
@@ -610,8 +728,35 @@ export class MonitorManager {
   private hasMonitorListChanged(newInfos: MonitorInfo[]): boolean {
     if (newInfos.length !== this.monitorInfoCache.length) return true;
 
-    const cachedIds = new Set(this.monitorInfoCache.map((m) => m.id));
-    return newInfos.some((m) => !cachedIds.has(m.id));
+    const cachedById = new Map(this.monitorInfoCache.map((m) => [m.id, m]));
+    return newInfos.some((m) => {
+      const cached = cachedById.get(m.id);
+      if (!cached) return true;
+
+      return (
+        cached.available !== m.available ||
+        cached.backend !== m.backend ||
+        cached.runtimeIndex !== m.runtimeIndex ||
+        cached.name !== m.name
+      );
+    });
+  }
+
+  private registerReadSuccess(monitorId: string): void {
+    this.consecutiveReadFailures.delete(monitorId);
+  }
+
+  private registerReadFailure(monitorId: string): number {
+    const next = (this.consecutiveReadFailures.get(monitorId) ?? 0) + 1;
+    this.consecutiveReadFailures.set(monitorId, next);
+    return next;
+  }
+
+  private hasReachedFailureThreshold(monitorId: string): boolean {
+    return (
+      (this.consecutiveReadFailures.get(monitorId) ?? 0) >=
+      MonitorManager.AVAILABILITY_FAILURE_THRESHOLD
+    );
   }
 
   private toDebugEntry(

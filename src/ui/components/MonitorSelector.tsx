@@ -102,11 +102,9 @@ export function MonitorSelector({ selectedMonitors, onMonitorsChange }: MonitorS
 
     const items: MonitorListItem[] = [];
 
-    // Always show detected/available monitors, and keep selected-but-unavailable monitors visible.
+    // Always show all currently-detected monitor identities, including unavailable ones.
     for (const monitor of monitors) {
-      if (monitor.available || selectedSet.has(monitor.id)) {
-        items.push({ ...monitor, isPlaceholder: false });
-      }
+      items.push({ ...monitor, isPlaceholder: false });
     }
 
     // If settings target monitors that aren't currently being reported, show placeholders
