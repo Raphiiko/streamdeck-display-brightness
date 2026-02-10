@@ -1,8 +1,9 @@
 export interface BrightnessSettings {
   selectedMonitors?: string[];
   stepSize?: number;
+  controlMode?: 'brightness' | 'contrast';
   // Index signature required by Stream Deck SDK's JsonObject constraint
-  [key: string]: string[] | number | undefined;
+  [key: string]: string[] | number | string | undefined;
 }
 
 export interface BrightnessButtonSettings {

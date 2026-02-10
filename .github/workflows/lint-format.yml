@@ -2,16 +2,37 @@ name: Lint and Format Check
 
 on:
   pull_request:
+    paths:
+      - '.github/workflows/lint-format.yml'
+      - 'src/**'
+      - 'assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'eslint.config.mjs'
+      - '.prettierrc'
+      - 'tsconfig.json'
+      - 'tsconfig.ui.json'
   push:
     branches:
       - develop
+    paths:
+      - '.github/workflows/lint-format.yml'
+      - 'src/**'
+      - 'assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'eslint.config.mjs'
+      - '.prettierrc'
+      - 'tsconfig.json'
+      - 'tsconfig.ui.json'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
-  lint-and-format:
+  lint:
+    name: ESLint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,8 +51,42 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Check formatting
         run: npm run format:check
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Type check
         run: npm run typecheck

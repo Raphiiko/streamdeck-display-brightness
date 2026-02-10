@@ -2,18 +2,26 @@ import streamDeck from '@elgato/streamdeck';
 import { Subscription, mergeMap, groupBy, switchMap } from 'rxjs';
 import { BrightnessDialAction } from './actions/brightness-dial-action';
 import { BrightnessButtonAction } from './actions/brightness-button-action';
+import { ContrastButtonAction } from './actions/contrast-button-action';
 import { MonitorManager } from './services/monitor-manager';
 import { BrightnessStore } from './services/brightness-store';
+import { ContrastStore } from './services/contrast-store';
 import { GlobalSettings } from './types/settings';
 
 streamDeck.logger.setLevel('trace');
 
 const monitorManager = MonitorManager.getInstance();
 const brightnessStore = BrightnessStore.getInstance();
+const contrastStore = ContrastStore.getInstance();
 const subscriptions: Subscription[] = [];
 
 function applyGlobalSettings(settings: GlobalSettings): void {
   brightnessStore.configure({
+    ddcWriteThrottleMs: settings.ddcWriteThrottleMs,
+    enforcementDurationMs: settings.enforcementDurationMs,
+    enforcementIntervalMs: settings.enforcementIntervalMs,
+  });
+  contrastStore.configure({
     ddcWriteThrottleMs: settings.ddcWriteThrottleMs,
     enforcementDurationMs: settings.enforcementDurationMs,
     enforcementIntervalMs: settings.enforcementIntervalMs,
@@ -43,6 +51,12 @@ subscriptions.push(
   })
 );
 
+subscriptions.push(
+  monitorManager.onContrastPollResult$.subscribe(({ monitorId, contrast, maxContrast }) => {
+    contrastStore.updateRealContrast(monitorId, contrast, maxContrast);
+  })
+);
+
 // Wire up BrightnessStore DDC write requests to MonitorManager
 // Throttling is now handled per-monitor in BrightnessStore
 // Group by monitorId: different monitors process in parallel, same monitor cancels pending writes
@@ -57,6 +71,22 @@ subscriptions.push(
           switchMap(({ monitorId, brightness }) => {
             const rawValue = brightnessStore.virtualToRaw(monitorId, brightness);
             return monitorManager.writeBrightness(monitorId, rawValue);
+          })
+        )
+      )
+    )
+    .subscribe()
+);
+
+subscriptions.push(
+  contrastStore.ddcWriteRequests$
+    .pipe(
+      groupBy(({ monitorId }) => monitorId),
+      mergeMap((group$) =>
+        group$.pipe(
+          switchMap(({ monitorId, contrast }) => {
+            const rawValue = contrastStore.virtualToRaw(monitorId, contrast);
+            return monitorManager.writeContrast(monitorId, rawValue);
           })
         )
       )
@@ -120,10 +150,12 @@ monitorManager
 
 streamDeck.actions.registerAction(new BrightnessDialAction());
 streamDeck.actions.registerAction(new BrightnessButtonAction());
+streamDeck.actions.registerAction(new ContrastButtonAction());
 void streamDeck.connect();
 
 process.on('SIGTERM', () => {
   subscriptions.forEach((sub) => sub.unsubscribe());
   brightnessStore.dispose();
+  contrastStore.dispose();
   monitorManager.dispose();
 });

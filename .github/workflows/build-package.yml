@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.github/workflows/build-package.yml'
+      - 'src/**'
+      - 'assets/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'rollup.config.mjs'
+      - 'tsconfig.json'
+      - 'tsconfig.ui.json'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
@@ -36,8 +45,36 @@ jobs:
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           echo "tag=v$VERSION" >> $env:GITHUB_OUTPUT
 
+      - name: Detect version change
+        id: version_change
+        shell: pwsh
+        run: |
+          $before = '${{ github.event.before }}'
+          if ([string]::IsNullOrWhiteSpace($before) -or $before -eq ('0' * 40)) {
+            echo "version_changed=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          $oldManifestRaw = git show "$before:assets/manifest.json" 2>$null
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($oldManifestRaw)) {
+            echo "version_changed=true" >> $env:GITHUB_OUTPUT
+            exit 0
+          }
+
+          $oldVersion = ($oldManifestRaw | ConvertFrom-Json).Version
+          $newVersion = (Get-Content assets/manifest.json -Raw | ConvertFrom-Json).Version
+
+          if ($oldVersion -ne $newVersion) {
+            echo "version_changed=true" >> $env:GITHUB_OUTPUT
+            echo "Version changed: $oldVersion -> $newVersion"
+          } else {
+            echo "version_changed=false" >> $env:GITHUB_OUTPUT
+            echo "Version unchanged ($newVersion); skipping package/release."
+          }
+
       - name: Check if tag exists
         id: check_tag
+        if: steps.version_change.outputs.version_changed == 'true'
         shell: pwsh
         run: |
           $ErrorActionPreference = 'SilentlyContinue'
@@ -50,19 +87,26 @@ jobs:
           exit 0
 
       - name: Install dependencies
+        if: steps.version_change.outputs.version_changed == 'true'
         run: npm ci
 
       - name: Build plugin
+        if: steps.version_change.outputs.version_changed == 'true'
         run: npm run build
 
       - name: Package the Stream Deck plugin
+        if: steps.version_change.outputs.version_changed == 'true'
         uses: j4ckofalltrades/streamdeck-package@main
         with:
           input-directory: dist/co.raphii.streamdeck-display-brightness.sdPlugin
           output-directory: release
 
+      - name: Skip package/release when version unchanged
+        if: steps.version_change.outputs.version_changed != 'true'
+        run: echo "Manifest version unchanged; skipping package and release steps."
+
       - name: Create Release
-        if: steps.check_tag.outputs.exists == 'false'
+        if: steps.version_change.outputs.version_changed == 'true' && steps.check_tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_version.outputs.tag }}

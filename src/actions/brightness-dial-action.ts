@@ -9,109 +9,111 @@ import streamDeck, {
   SendToPluginEvent,
   TouchTapEvent,
 } from '@elgato/streamdeck';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { BrightnessSettings } from '../types/settings';
 import { MonitorManager } from '../services/monitor-manager';
 import { BrightnessStore } from '../services/brightness-store';
+import { ContrastStore } from '../services/contrast-store';
+
+type ControlMode = 'brightness' | 'contrast';
 
 interface ActionInstanceMethods {
   id: string;
   showAlert(): Promise<void>;
-  setFeedback?(settings: {
-    title: string;
-    value: string;
-    indicator: { value: number };
-  }): Promise<void>;
+  setSettings?(settings: BrightnessSettings): Promise<void>;
+  setFeedback?(settings: Record<string, unknown>): Promise<void>;
+  setFeedbackLayout?(layout: string): Promise<void>;
 }
 
 @action({ UUID: 'co.raphii.streamdeck-display-brightness.dial' })
 export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
+  private static readonly DIAL_LAYOUT_PATH = 'layouts/dial-control.json';
+  private static readonly BRIGHTNESS_ICON_PATH = 'imgs/actions/brightness/icon.png';
+  private static readonly CONTRAST_ICON_PATH = 'imgs/actions/contrast/icon.png';
+
   private monitorManager = MonitorManager.getInstance();
   private brightnessStore = BrightnessStore.getInstance();
-  // Map of action context ID to subscription - each dial needs its own subscription
-  private brightnessSubscriptions = new Map<string, Subscription>();
+  private contrastStore = ContrastStore.getInstance();
+  private subscriptions = new Map<string, Subscription>();
+  private contextsWithCustomLayout = new Set<string>();
 
   override async onWillAppear(ev: WillAppearEvent<BrightnessSettings>): Promise<void> {
     const { selectedMonitors = [] } = ev.payload.settings;
-
-    // Subscribe to average brightness changes for selected monitors
-    this.subscribeToBrightness(ev, selectedMonitors);
+    this.subscribeToActiveControl(ev, selectedMonitors);
     await this.updateDisplay(ev);
   }
 
   override onWillDisappear(ev: WillDisappearEvent<BrightnessSettings>): void {
     const contextId = ev.action.id;
-    const subscription = this.brightnessSubscriptions.get(contextId);
+    const subscription = this.subscriptions.get(contextId);
     if (subscription) {
       subscription.unsubscribe();
-      this.brightnessSubscriptions.delete(contextId);
+      this.subscriptions.delete(contextId);
     }
+    this.contextsWithCustomLayout.delete(contextId);
   }
 
   override async onDialRotate(ev: DialRotateEvent<BrightnessSettings>): Promise<void> {
     const settings = ev.payload.settings;
     const { selectedMonitors = [], stepSize = 5 } = settings;
+    const mode = this.getControlMode(settings);
 
     if (selectedMonitors.length === 0) return;
 
-    // Get current dial brightness (average of virtual brightness for selected monitors)
-    const currentDialBrightness =
-      this.brightnessStore.getAverageVirtualBrightness(selectedMonitors);
-
-    // Calculate new brightness
+    const currentValue = this.getAverageControlValue(mode, selectedMonitors);
     const delta = ev.payload.ticks * stepSize;
-    const newBrightness = Math.max(0, Math.min(100, currentDialBrightness + delta));
+    const newValue = Math.max(0, Math.min(100, currentValue + delta));
 
-    // Set virtual brightness for all selected monitors to the new value
-    // This will:
-    // 1. Update the store immediately (responsive UI)
-    // 2. Mark the timestamp so polling won't overwrite for 3 seconds
-    // 3. Emit to the throttled DDC write stream
     for (const monitorId of selectedMonitors) {
-      this.brightnessStore.setVirtualBrightness(monitorId, newBrightness);
+      this.setVirtualControlValue(mode, monitorId, newValue);
     }
 
-    // Update display immediately with the new value
-    await this.updateDisplayWithValue(ev, newBrightness);
+    await this.updateDisplayWithValue(ev, newValue, mode);
   }
 
   override async onDialDown(ev: DialDownEvent<BrightnessSettings>): Promise<void> {
-    const { selectedMonitors = [] } = ev.payload.settings;
-    if (selectedMonitors.length === 0) return;
+    const nextMode: ControlMode =
+      this.getControlMode(ev.payload.settings) === 'brightness' ? 'contrast' : 'brightness';
+    const nextSettings: BrightnessSettings = { ...ev.payload.settings, controlMode: nextMode };
 
-    const currentDialBrightness =
-      this.brightnessStore.getAverageVirtualBrightness(selectedMonitors);
-    const newBrightness = currentDialBrightness >= 100 ? 0 : 100;
+    await ev.action.setSettings?.(nextSettings);
 
-    await this.setBrightnessForMonitors(ev, selectedMonitors, newBrightness);
+    const selectedMonitors = nextSettings.selectedMonitors ?? [];
+    this.subscribeToActiveControl(
+      {
+        action: ev.action,
+        payload: { settings: nextSettings },
+      },
+      selectedMonitors
+    );
+
+    if (selectedMonitors.length === 0) {
+      await this.updateDisplay({ action: ev.action, payload: { settings: nextSettings } });
+      return;
+    }
+
+    const currentValue = this.getAverageControlValue(nextMode, selectedMonitors);
+    await this.updateDisplayWithValue(
+      { action: ev.action, payload: { settings: nextSettings } },
+      currentValue,
+      nextMode
+    );
   }
 
   override async onTouchTap(ev: TouchTapEvent<BrightnessSettings>): Promise<void> {
     const { selectedMonitors = [] } = ev.payload.settings;
     if (selectedMonitors.length === 0) return;
 
-    const newBrightness = ev.payload.hold ? 0 : 100;
-    await this.setBrightnessForMonitors(ev, selectedMonitors, newBrightness);
-  }
-
-  private async setBrightnessForMonitors(
-    ev: { action: ActionInstanceMethods; payload: { settings: BrightnessSettings } },
-    monitorIds: string[],
-    brightness: number
-  ): Promise<void> {
-    for (const monitorId of monitorIds) {
-      this.brightnessStore.setVirtualBrightness(monitorId, brightness);
-    }
-    await this.updateDisplayWithValue(ev, brightness);
+    const mode = this.getControlMode(ev.payload.settings);
+    const newValue = ev.payload.hold ? 0 : 100;
+    await this.setControlForMonitors(ev, selectedMonitors, newValue, mode);
   }
 
   override async onDidReceiveSettings(
     ev: DidReceiveSettingsEvent<BrightnessSettings>
   ): Promise<void> {
     const { selectedMonitors = [] } = ev.payload.settings;
-
-    // Re-subscribe with new monitor selection
-    this.subscribeToBrightness(ev, selectedMonitors);
+    this.subscribeToActiveControl(ev, selectedMonitors);
     await this.updateDisplay(ev);
   }
 
@@ -159,29 +161,64 @@ export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
     }
   }
 
-  private subscribeToBrightness(
+  private async setControlForMonitors(
+    ev: { action: ActionInstanceMethods; payload: { settings: BrightnessSettings } },
+    monitorIds: string[],
+    value: number,
+    mode: ControlMode
+  ): Promise<void> {
+    for (const monitorId of monitorIds) {
+      this.setVirtualControlValue(mode, monitorId, value);
+    }
+    await this.updateDisplayWithValue(ev, value, mode);
+  }
+
+  private subscribeToActiveControl(
     ev: { action: ActionInstanceMethods; payload: { settings: BrightnessSettings } },
     monitorIds: string[]
   ): void {
     const contextId = ev.action.id;
 
-    // Clean up existing subscription for this specific dial
-    const existingSubscription = this.brightnessSubscriptions.get(contextId);
+    const existingSubscription = this.subscriptions.get(contextId);
     if (existingSubscription) {
       existingSubscription.unsubscribe();
-      this.brightnessSubscriptions.delete(contextId);
+      this.subscriptions.delete(contextId);
     }
 
     if (monitorIds.length === 0) return;
 
-    // Subscribe to average virtual brightness for the selected monitors
-    const subscription = this.brightnessStore
-      .getAverageVirtualBrightness$(monitorIds)
-      .subscribe((avgBrightness) => {
-        void this.updateDisplayWithValue(ev, avgBrightness);
-      });
+    const mode = this.getControlMode(ev.payload.settings);
+    const subscription = this.getAverageControlValue$(mode, monitorIds).subscribe((avgValue) => {
+      void this.updateDisplayWithValue(ev, avgValue, mode);
+    });
 
-    this.brightnessSubscriptions.set(contextId, subscription);
+    this.subscriptions.set(contextId, subscription);
+  }
+
+  private getControlMode(settings: BrightnessSettings): ControlMode {
+    return settings.controlMode === 'contrast' ? 'contrast' : 'brightness';
+  }
+
+  private getAverageControlValue(mode: ControlMode, monitorIds: string[]): number {
+    if (mode === 'contrast') {
+      return this.contrastStore.getAverageVirtualContrast(monitorIds);
+    }
+    return this.brightnessStore.getAverageVirtualBrightness(monitorIds);
+  }
+
+  private getAverageControlValue$(mode: ControlMode, monitorIds: string[]): Observable<number> {
+    if (mode === 'contrast') {
+      return this.contrastStore.getAverageVirtualContrast$(monitorIds);
+    }
+    return this.brightnessStore.getAverageVirtualBrightness$(monitorIds);
+  }
+
+  private setVirtualControlValue(mode: ControlMode, monitorId: string, value: number): void {
+    if (mode === 'contrast') {
+      this.contrastStore.setVirtualContrast(monitorId, value);
+      return;
+    }
+    this.brightnessStore.setVirtualBrightness(monitorId, value);
   }
 
   private async updateDisplay(ev: {
@@ -189,9 +226,10 @@ export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
     payload: { settings: BrightnessSettings };
   }): Promise<void> {
     const { selectedMonitors = [] } = ev.payload.settings;
+    const mode = this.getControlMode(ev.payload.settings);
 
     if (selectedMonitors.length === 0) {
-      await this.setFeedback(ev, 'Select Monitor', '--', 0);
+      await this.setFeedback(ev, 'Select Monitor', this.getModeLabel(mode), 0, mode);
       return;
     }
 
@@ -201,43 +239,78 @@ export class BrightnessDialAction extends SingletonAction<BrightnessSettings> {
     });
 
     if (availableMonitors.length === 0) {
-      await this.setFeedback(ev, 'Unavailable', 'ERR', 0);
+      await this.setFeedback(ev, 'Unavailable', 'ERR', 0, mode);
       await ev.action.showAlert();
       return;
     }
 
-    const avgBrightness = this.brightnessStore.getAverageVirtualBrightness(selectedMonitors);
-    await this.updateDisplayWithValue(ev, avgBrightness);
+    const avgValue = this.getAverageControlValue(mode, selectedMonitors);
+    await this.updateDisplayWithValue(ev, avgValue, mode);
   }
 
   private async updateDisplayWithValue(
     ev: { action: ActionInstanceMethods; payload: { settings: BrightnessSettings } },
-    brightness: number
+    value: number,
+    mode: ControlMode
   ): Promise<void> {
     const { selectedMonitors = [] } = ev.payload.settings;
 
     if (selectedMonitors.length === 0) {
-      await this.setFeedback(ev, 'Select Monitor', '--', 0);
+      await this.setFeedback(ev, 'Select Monitor', this.getModeLabel(mode), 0, mode);
       return;
     }
 
     const displayName = this.getDisplayName(selectedMonitors);
-    await this.setFeedback(ev, displayName, `${Math.round(brightness)}%`, brightness);
+    const modeValueSuffix = mode === 'contrast' ? 'CT' : 'BR';
+    await this.setFeedback(
+      ev,
+      displayName,
+      `${Math.round(value)}% ${modeValueSuffix}`,
+      value,
+      mode
+    );
+  }
+
+  private getModeLabel(mode: ControlMode): string {
+    return mode === 'contrast' ? 'Contrast' : 'Brightness';
   }
 
   private async setFeedback(
     ev: { action: ActionInstanceMethods },
     title: string,
     value: string,
-    indicator: number
+    indicator: number,
+    mode: ControlMode
   ): Promise<void> {
+    await this.ensureDialLayout(ev.action);
+
     if (ev.action.setFeedback) {
       await ev.action.setFeedback({
+        icon: this.getModeIconPath(mode),
         title,
         value,
         indicator: { value: indicator },
       });
     }
+  }
+
+  private async ensureDialLayout(action: ActionInstanceMethods): Promise<void> {
+    if (!action.setFeedbackLayout) {
+      return;
+    }
+
+    if (this.contextsWithCustomLayout.has(action.id)) {
+      return;
+    }
+
+    await action.setFeedbackLayout(BrightnessDialAction.DIAL_LAYOUT_PATH);
+    this.contextsWithCustomLayout.add(action.id);
+  }
+
+  private getModeIconPath(mode: ControlMode): string {
+    return mode === 'contrast'
+      ? BrightnessDialAction.CONTRAST_ICON_PATH
+      : BrightnessDialAction.BRIGHTNESS_ICON_PATH;
   }
 
   private getDisplayName(selectedMonitors: string[]): string {

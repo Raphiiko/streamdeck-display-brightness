@@ -4,7 +4,7 @@
   <img alt="Display Brightness Plugin for Stream Deck" src="docs/logo_light.png">
 </picture>
 
-Control the brightness of your displays directly from your Stream Deck using [DDC/CI](https://en.wikipedia.org/wiki/Display_Data_Channel) (Display Data Channel).
+Control the brightness and contrast of your displays directly from your Stream Deck using [DDC/CI](https://en.wikipedia.org/wiki/Display_Data_Channel) (Display Data Channel).
 
 ## Features
 
@@ -12,8 +12,8 @@ Control the brightness of your displays directly from your Stream Deck using [DD
 <tr>
 <td width="50%">
 
-- **Dial Control**: Adjust brightness by rotating a Stream Deck dial
-- **Button Control**: Quick brightness presets or cycle through values with button presses
+- **Dial Control**: Adjust brightness or contrast by rotating a Stream Deck dial
+- **Button Control**: Quick brightness/contrast presets or cycle through values with button presses
 - **Multi-Monitor Support**: Control individual monitors or multiple monitors at once
 
 </td>
@@ -29,7 +29,7 @@ Control the brightness of your displays directly from your Stream Deck using [DD
 
 ### Display Brightness Control (Dial)
 
-For devices like the Stream Deck+ with built-in dials. Rotate to adjust brightness, tap for quick actions.
+For devices like the Stream Deck+ with built-in dials. Rotate to adjust the active mode, then press the dial to switch between brightness and contrast.
 
 <table>
 <tr>
@@ -38,10 +38,10 @@ For devices like the Stream Deck+ with built-in dials. Rotate to adjust brightne
 **Features:**
 
 - Control individual displays or multiple displays at once
-- Rotate the dial to adjust display brightness
-- Press the dial to toggle between 0% and 100% brightness
-- Tap display for 100% brightness
-- Hold display for 0% brightness
+- Rotate the dial to adjust display brightness or contrast
+- Press the dial to switch between brightness and contrast mode
+- Tap display for 100% in the active mode
+- Hold display for 0% in the active mode
 - Customizable step size
 
 </td>
@@ -69,6 +69,10 @@ Works with any Stream Deck model. Choose from multiple modes to control your bri
 - **Increase/Decrease**: Increment or decrement brightness by a fixed step
 
 Control individual displays or all monitors at once.
+
+### Display Contrast Control (Button)
+
+Works exactly like the brightness button action, but applies the selected mode to monitor contrast instead.
 
 </td>
 <td width="50%">

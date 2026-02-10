@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <mask id="contrast-cutout">
+      <rect width="100%" height="100%" fill="white"/>
+      <g transform="translate(256, 220)">
+        <circle cx="0" cy="0" r="66" fill="none" stroke="black" stroke-width="12"/>
+        <path d="M 0 -60 A 60 60 0 0 0 0 60 Z" fill="black"/>
+        <line x1="0" y1="-60" x2="0" y2="60" stroke="black" stroke-width="6" stroke-linecap="round"/>
+      </g>
+    </mask>
+  </defs>
+
+  <g fill="#ffffff" mask="url(#contrast-cutout)">
+    <rect x="56" y="80" width="400" height="280" rx="30" />
+    <rect x="226" y="360" width="60" height="25" />
+    <rect x="156" y="385" width="200" height="30" rx="4" />
+  </g>
+</svg>

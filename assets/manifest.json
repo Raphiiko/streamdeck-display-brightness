@@ -1,9 +1,9 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Display Brightness Control",
-  "Version": "1.0.5.0",
+  "Version": "1.1.0.0",
   "Author": "Raphiiko",
-  "Description": "Control the brightness of external displays via DDC/CI",
+  "Description": "Control display brightness and contrast via DDC/CI",
   "Icon": "imgs/plugin/marketplace",
   "Category": "Display Brightness Control",
   "CategoryIcon": "imgs/plugin/category-icon",
@@ -26,16 +26,16 @@
   },
   "Actions": [
     {
-      "Name": "Display Brightness Control",
+      "Name": "Display Brightness/Contrast Control",
       "UUID": "co.raphii.streamdeck-display-brightness.dial",
       "Icon": "imgs/actions/brightness/icon",
-      "Tooltip": "Control display brightness via DDC/CI",
+      "Tooltip": "Control display brightness or contrast via DDC/CI",
       "Controllers": ["Encoder"],
       "Encoder": {
         "layout": "$B1",
         "TriggerDescription": {
-          "Rotate": "Adjust brightness",
-          "Push": "Toggle 0%/100%",
+          "Rotate": "Adjust value",
+          "Push": "Switch mode",
           "Touch": "Set to 100%",
           "LongTouch": "Set to 0%"
         }
@@ -59,6 +59,21 @@
         }
       ],
       "PropertyInspectorPath": "ui/brightness-button-pi.html",
+      "SupportedInMultiActions": true,
+      "UserTitleEnabled": true
+    },
+    {
+      "Name": "Display Contrast Control",
+      "UUID": "co.raphii.streamdeck-display-brightness.contrast-button",
+      "Icon": "imgs/actions/contrast/icon",
+      "Tooltip": "Control display contrast with a button",
+      "Controllers": ["Keypad"],
+      "States": [
+        {
+          "Image": "imgs/actions/contrast/dial"
+        }
+      ],
+      "PropertyInspectorPath": "ui/contrast-button-pi.html",
       "SupportedInMultiActions": true,
       "UserTitleEnabled": true
     }

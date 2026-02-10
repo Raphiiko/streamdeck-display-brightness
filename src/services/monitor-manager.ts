@@ -76,6 +76,7 @@ export class MonitorManager {
   private lastDebugSnapshot: MonitorDebugSnapshot | null = null;
   private recentErrors: Array<{ timestampIso: string; monitorId?: string; message: string }> = [];
   private consecutiveReadFailures = new Map<string, number>();
+  private unsupportedContrastMonitorIds = new Set<string>();
 
   private brightnessPollIntervalMs = DEFAULT_BRIGHTNESS_POLL_INTERVAL_MS;
   private monitorPollIntervalMs = DEFAULT_MONITOR_POLL_INTERVAL_MS;
@@ -88,6 +89,11 @@ export class MonitorManager {
     brightness: number;
     maxBrightness: number;
   }>();
+  private contrastPollResultSubject = new Subject<{
+    monitorId: string;
+    contrast: number;
+    maxContrast: number;
+  }>();
   private monitorsChangedSubject = new Subject<MonitorInfo[]>();
   private errorSubject = new Subject<{ error: Error; monitorId?: string }>();
 
@@ -95,6 +101,11 @@ export class MonitorManager {
     monitorId: string;
     brightness: number;
     maxBrightness: number;
+  }>;
+  public onContrastPollResult$: Observable<{
+    monitorId: string;
+    contrast: number;
+    maxContrast: number;
   }>;
   public onMonitorsChanged$: Observable<MonitorInfo[]>;
   public onError$: Observable<{ error: Error; monitorId?: string }>;
@@ -108,6 +119,7 @@ export class MonitorManager {
 
   private constructor() {
     this.onPollResult$ = this.pollResultSubject.asObservable();
+    this.onContrastPollResult$ = this.contrastPollResultSubject.asObservable();
     this.onMonitorsChanged$ = this.monitorsChangedSubject.asObservable();
     this.onError$ = this.errorSubject.asObservable();
   }
@@ -277,10 +289,31 @@ export class MonitorManager {
     );
   }
 
+  writeContrast(monitorId: string, rawValue: number): Observable<void> {
+    const monitor = this.monitors.find((m) => m.id === monitorId);
+    if (!monitor) {
+      return EMPTY;
+    }
+
+    return from(
+      monitor.display
+        .setVcpFeature(VCPFeatureCode.ImageAdjustment.Contrast, rawValue)
+        .catch((err: Error) => {
+          this.emitError(err, monitorId);
+        })
+    ).pipe(
+      catchError((err: Error) => {
+        this.emitError(err, monitorId);
+        return EMPTY;
+      })
+    );
+  }
+
   dispose(): void {
     this.stopBrightnessPolling();
     this.stopMonitorPolling();
     this.pollResultSubject.complete();
+    this.contrastPollResultSubject.complete();
     this.monitorsChangedSubject.complete();
     this.errorSubject.complete();
   }
@@ -700,6 +733,35 @@ export class MonitorManager {
           if (failures >= MonitorManager.AVAILABILITY_FAILURE_THRESHOLD) {
             cached.available = false;
           }
+        }
+      }
+
+      try {
+        if (this.unsupportedContrastMonitorIds.has(monitor.id)) {
+          continue;
+        }
+
+        const contrastFeature = await monitor.display.getVcpFeature(
+          VCPFeatureCode.ImageAdjustment.Contrast
+        );
+        if (contrastFeature.type === VcpValueType.Continuous) {
+          this.unsupportedContrastMonitorIds.delete(monitor.id);
+          this.contrastPollResultSubject.next({
+            monitorId: monitor.id,
+            contrast: contrastFeature.currentValue,
+            maxContrast: contrastFeature.maximumValue,
+          });
+        }
+      } catch (err) {
+        const wasUnsupported = this.unsupportedContrastMonitorIds.has(monitor.id);
+        this.unsupportedContrastMonitorIds.add(monitor.id);
+        if (!wasUnsupported) {
+          this.emitError(
+            err instanceof Error
+              ? err
+              : new Error('DDC read failed or unsupported contrast feature'),
+            monitor.id
+          );
         }
       }
     }

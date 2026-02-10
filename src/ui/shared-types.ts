@@ -16,6 +16,7 @@ export interface StreamDeck {
 export interface DialSettings {
   selectedMonitors: string[];
   stepSize: number;
+  controlMode?: 'brightness' | 'contrast';
 }
 
 export type ConnectElgatoStreamDeckSocket = (

@@ -9,6 +9,7 @@ import { openUrl, registerPropertyInspector } from './streamdeck';
 const DEFAULT_SETTINGS: DialSettings = {
   selectedMonitors: [],
   stepSize: 5,
+  controlMode: 'brightness',
 };
 
 const DEFAULT_GLOBAL_SETTINGS: GlobalSettings = {};
@@ -79,7 +80,7 @@ function BrightnessDialPI() {
       h(
         'div',
         { className: 'sdpi-info' },
-        'Step size determines how much of brightness changes per dial tick.'
+        'Step size determines how much the active mode changes per dial tick. Press the dial to switch between brightness and contrast.'
       )
     ),
     h(AdvancedSettings, {

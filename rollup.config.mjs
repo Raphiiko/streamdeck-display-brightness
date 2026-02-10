@@ -126,6 +126,10 @@ function copyUiAssets(sdPlugin) {
       const buttonHtmlDest = path.join(destDir, 'brightness-button-pi.html');
       fs.copyFileSync(buttonHtmlSrc, buttonHtmlDest);
 
+      const contrastButtonHtmlSrc = 'src/ui/contrast-button-pi.html';
+      const contrastButtonHtmlDest = path.join(destDir, 'contrast-button-pi.html');
+      fs.copyFileSync(contrastButtonHtmlSrc, contrastButtonHtmlDest);
+
       // Copy component CSS
       const dialCssSrc = 'src/ui/brightness-dial-pi.css';
       const dialCssDest = path.join(destDir, 'brightness-dial-pi.css');
@@ -164,7 +168,14 @@ function copyStaticAssets(sdPlugin) {
       const imgsDest = path.join(sdPlugin, 'imgs');
       fs.cpSync(imgsSrc, imgsDest, { recursive: true });
 
-      console.log('Copied static assets (manifest, images)');
+      // Copy encoder layouts
+      const layoutsSrc = 'assets/layouts';
+      const layoutsDest = path.join(sdPlugin, 'layouts');
+      if (fs.existsSync(layoutsSrc)) {
+        fs.cpSync(layoutsSrc, layoutsDest, { recursive: true });
+      }
+
+      console.log('Copied static assets (manifest, images, layouts)');
     },
   };
 }
@@ -245,6 +256,27 @@ const configs = [
     input: 'src/ui/brightness-button-pi.tsx',
     output: {
       file: `${sdPlugin}/ui/brightness-button-pi.js`,
+      format: 'iife',
+      sourcemap: isWatching,
+    },
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.ui.json',
+      }),
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
+      commonjs(),
+      !isWatching && terser(),
+      copyUiAssets(sdPlugin),
+    ],
+  },
+  // UI property inspector for contrast button action
+  {
+    input: 'src/ui/contrast-button-pi.tsx',
+    output: {
+      file: `${sdPlugin}/ui/contrast-button-pi.js`,
       format: 'iife',
       sourcemap: isWatching,
     },
